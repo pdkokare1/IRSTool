@@ -6,10 +6,26 @@ import { countries } from './countryData';
 export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [ticker, setTicker] = useState(Date.now());
-  const [selectedCountries, setSelectedCountries] = useState([]);
   
-  // New State for Associate Location
-  const [associateLocation, setAssociateLocation] = useState('US');
+  // Initialize state from localStorage to persist data across refreshes
+  const [associateLocation, setAssociateLocation] = useState(() => {
+    return localStorage.getItem('associateLocation') || 'US';
+  });
+  
+  const [selectedCountries, setSelectedCountries] = useState(() => {
+    const saved = localStorage.getItem('selectedCountries');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // Save location to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('associateLocation', associateLocation);
+  }, [associateLocation]);
+
+  // Save active canvas targets to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('selectedCountries', JSON.stringify(selectedCountries));
+  }, [selectedCountries]);
 
   // Update the time every 60 seconds
   useEffect(() => {
@@ -122,11 +138,10 @@ export default function App() {
         .drawer-header { padding: 28px 24px 20px; border-bottom: 1px solid var(--border); }
         .drawer-title { margin: 0 0 20px 0; font-size: 22px; font-weight: 800; color: var(--text-main); letter-spacing: -0.03em; }
         
-        /* Premium Segmented Control for Location */
-        .location-selector { display: flex; background-color: #F1F5F9; padding: 4px; border-radius: 12px; margin-bottom: 20px; }
-        .loc-btn { flex: 1; padding: 8px 12px; border: none; background: transparent; border-radius: 8px; font-size: 13px; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .loc-btn.active { background-color: #FFFFFF; color: var(--text-main); box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08); }
-        .loc-btn:hover:not(.active) { color: var(--text-main); }
+        /* Premium Dropdown Selector */
+        .location-dropdown { width: 100%; padding: 12px 16px; font-size: 14px; font-weight: 600; color: var(--text-main); background-color: #F1F5F9; border: 1px solid transparent; border-radius: 10px; margin-bottom: 20px; cursor: pointer; outline: none; appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 16px center; background-size: 16px; transition: all 0.2s; }
+        .location-dropdown:hover { background-color: #E2E8F0; }
+        .location-dropdown:focus { border-color: var(--color-eu); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15); background-color: #FFF; }
 
         .search-input { width: 100%; padding: 14px 16px; font-size: 14px; border-radius: 10px; border: 1px solid var(--border); box-sizing: border-box; outline: none; transition: all 0.2s; background-color: #F8FAFC; color: var(--text-main); }
         .search-input:focus { border-color: var(--color-eu); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15); background-color: #FFF; }
@@ -189,27 +204,16 @@ export default function App() {
           <div className="drawer-header">
             <h2 className="drawer-title">Global Directory</h2>
             
-            {/* New Location Selector */}
-            <div className="location-selector">
-              <button 
-                className={`loc-btn ${associateLocation === 'IN' ? 'active' : ''}`}
-                onClick={() => setAssociateLocation('IN')}
-              >
-                🇮🇳 India
-              </button>
-              <button 
-                className={`loc-btn ${associateLocation === 'US' ? 'active' : ''}`}
-                onClick={() => setAssociateLocation('US')}
-              >
-                🇺🇸 US
-              </button>
-              <button 
-                className={`loc-btn ${associateLocation === 'UK' ? 'active' : ''}`}
-                onClick={() => setAssociateLocation('UK')}
-              >
-                🇬🇧 UK
-              </button>
-            </div>
+            {/* Persisted Location Dropdown */}
+            <select 
+              className="location-dropdown"
+              value={associateLocation}
+              onChange={(e) => setAssociateLocation(e.target.value)}
+            >
+              <option value="IN">🇮🇳 India Office</option>
+              <option value="US">🇺🇸 US Office</option>
+              <option value="UK">🇬🇧 UK Office</option>
+            </select>
 
             <input 
               type="text" 
