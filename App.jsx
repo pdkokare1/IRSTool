@@ -7,7 +7,7 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [ticker, setTicker] = useState(Date.now());
   
-  // Initialize state from localStorage to persist data across refreshes
+  // Initialize state from localStorage
   const [associateLocation, setAssociateLocation] = useState(() => {
     return localStorage.getItem('associateLocation') || 'US';
   });
@@ -17,15 +17,16 @@ export default function App() {
     return saved ? JSON.parse(saved) : [];
   });
 
-  // Save location to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem('associateLocation', associateLocation);
-  }, [associateLocation]);
+  // Map the dropdown locations to standard timezones
+  const officeTimezones = {
+    'IN': 'Asia/Kolkata',
+    'US': 'America/New_York', // Anchoring US to Eastern Time
+    'UK': 'Europe/London'
+  };
 
-  // Save active canvas targets to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem('selectedCountries', JSON.stringify(selectedCountries));
-  }, [selectedCountries]);
+  // Save state whenever it changes
+  useEffect(() => localStorage.setItem('associateLocation', associateLocation), [associateLocation]);
+  useEffect(() => localStorage.setItem('selectedCountries', JSON.stringify(selectedCountries)), [selectedCountries]);
 
   // Update the time every 60 seconds
   useEffect(() => {
@@ -33,19 +34,40 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
-  // Process time and status for all countries
+  // Process time, status, and relative offset for all countries
   const processedCountries = countries.map(country => {
-    const options = { timeZone: country.timezone, hour: 'numeric', minute: 'numeric', hour12: true };
-    const localTimeString = new Intl.DateTimeFormat('en-US', options).format(new Date());
+    const currentAssociateTz = officeTimezones[associateLocation];
+    const now = new Date();
 
+    // 1. Get readable time string
+    const options = { timeZone: country.timezone, hour: 'numeric', minute: 'numeric', hour12: true };
+    const localTimeString = new Intl.DateTimeFormat('en-US', options).format(now);
+
+    // 2. Get hour for call status
     const hourOptions = { timeZone: country.timezone, hour: 'numeric', hour12: false };
-    const localHour = parseInt(new Intl.DateTimeFormat('en-US', hourOptions).format(new Date()), 10);
+    const localHour = parseInt(new Intl.DateTimeFormat('en-US', hourOptions).format(now), 10);
 
     let callStatus = 'unavailable';
     if (localHour >= 9 && localHour < 17) callStatus = 'available';
     else if (localHour >= 7 && localHour < 9) callStatus = 'soon';
 
-    return { ...country, localTimeString, callStatus };
+    // 3. Calculate Relative Time Offset (handles DST perfectly)
+    const dateAssociate = new Date(now.toLocaleString('en-US', { timeZone: currentAssociateTz }));
+    const dateTarget = new Date(now.toLocaleString('en-US', { timeZone: country.timezone }));
+    
+    const diffMins = Math.round((dateTarget - dateAssociate) / 60000);
+    
+    let offsetText = "Same time zone";
+    if (diffMins !== 0) {
+      const hrs = Math.floor(Math.abs(diffMins) / 60);
+      const mins = Math.abs(diffMins) % 60;
+      let timeStr = '';
+      if (hrs > 0) timeStr += `${hrs}h`;
+      if (mins > 0) timeStr += ` ${mins}m`;
+      offsetText = diffMins > 0 ? `${timeStr.trim()} ahead` : `${timeStr.trim()} behind`;
+    }
+
+    return { ...country, localTimeString, callStatus, offsetText };
   });
 
   // Filter drawer list based on search
@@ -86,7 +108,10 @@ export default function App() {
             >
               <div className="list-item-left">
                 <span className={`status-dot ${dotClass}`}></span>
-                <span className="country-name">{country.name}</span>
+                <div style={{display: 'flex', flexDirection: 'column'}}>
+                  <span className="country-name">{country.name}</span>
+                  <span className="time-offset-small" style={{fontSize: '11px', color: '#94A3B8', marginTop: '2px'}}>{country.offsetText}</span>
+                </div>
               </div>
               <span className="time-preview">{country.localTimeString}</span>
             </div>
@@ -108,12 +133,10 @@ export default function App() {
           --text-muted: #64748B;
           --border: #E2E8F0;
           
-          /* Premium Shadows */
           --shadow-sm: 0 2px 4px rgba(15, 23, 42, 0.04);
           --shadow-card: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 4px 10px -5px rgba(15, 23, 42, 0.04);
           --shadow-hover: 0 20px 35px -10px rgba(15, 23, 42, 0.12), 0 10px 15px -5px rgba(15, 23, 42, 0.08);
           
-          /* Vibrant Status Colors */
           --color-good: #10B981;
           --grad-good: linear-gradient(135deg, #10B981 0%, #059669 100%);
           --bg-good: #ECFDF5;
@@ -133,12 +156,10 @@ export default function App() {
         
         .layout { display: flex; height: 100vh; overflow: hidden; }
         
-        /* Drawer Styles */
         .drawer { width: 360px; min-width: 360px; background-color: var(--bg-drawer); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 10; box-shadow: 4px 0 24px rgba(15, 23, 42, 0.03); }
         .drawer-header { padding: 28px 24px 20px; border-bottom: 1px solid var(--border); }
         .drawer-title { margin: 0 0 20px 0; font-size: 22px; font-weight: 800; color: var(--text-main); letter-spacing: -0.03em; }
         
-        /* Premium Dropdown Selector */
         .location-dropdown { width: 100%; padding: 12px 16px; font-size: 14px; font-weight: 600; color: var(--text-main); background-color: #F1F5F9; border: 1px solid transparent; border-radius: 10px; margin-bottom: 20px; cursor: pointer; outline: none; appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 16px center; background-size: 16px; transition: all 0.2s; }
         .location-dropdown:hover { background-color: #E2E8F0; }
         .location-dropdown:focus { border-color: var(--color-eu); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15); background-color: #FFF; }
@@ -149,7 +170,6 @@ export default function App() {
         
         .drawer-scroll { flex: 1; overflow-y: auto; padding: 20px 24px; }
         
-        /* List Styles */
         .list-section { margin-bottom: 28px; }
         .list-header { font-size: 12px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin: 0 0 14px 0; letter-spacing: 0.08em; display: flex; align-items: center; }
         .list-header .count { margin-left: 6px; opacity: 0.7; font-weight: 600; }
@@ -157,22 +177,20 @@ export default function App() {
         .list-item:hover { background-color: #F1F5F9; transform: translateX(2px); }
         .list-item.selected { background-color: var(--bg-good); border-color: rgba(16, 185, 129, 0.25); transform: translateX(2px); }
         .list-item-left { display: flex; align-items: center; }
-        .status-dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 14px; }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 14px; flex-shrink: 0; }
         .dot-good { background: var(--grad-good); box-shadow: 0 0 0 3px var(--bg-good); }
         .dot-soon { background: var(--grad-soon); box-shadow: 0 0 0 3px var(--bg-soon); }
         .dot-bad { background: var(--grad-bad); }
         .country-name { font-weight: 600; font-size: 14px; color: #334155; }
         .selected .country-name { color: #065F46; }
-        .time-preview { font-size: 13px; color: var(--text-muted); font-weight: 500; font-variant-numeric: tabular-nums; }
+        .time-preview { font-size: 13px; color: var(--text-muted); font-weight: 600; font-variant-numeric: tabular-nums; }
         
-        /* Canvas Styles */
         .canvas { flex: 1; padding: 56px; overflow-y: auto; }
         .canvas-empty { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); text-align: center; animation: fadeIn 0.5s ease-in-out; }
         .canvas-empty h2 { font-size: 28px; font-weight: 800; color: var(--text-main); margin-bottom: 12px; letter-spacing: -0.03em; }
         .canvas-empty p { font-size: 16px; max-width: 420px; line-height: 1.6; color: #64748B; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 28px; align-content: start; }
         
-        /* Premium Card Styles */
         .card { background-color: #FFF; padding: 28px; border-radius: 20px; display: flex; flex-direction: column; box-shadow: var(--shadow-card); border: 1px solid rgba(255,255,255,0.8); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden; animation: slideUp 0.4s ease-out; }
         .card:hover { transform: translateY(-6px); box-shadow: var(--shadow-hover); }
         .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 6px; }
@@ -180,9 +198,13 @@ export default function App() {
         .card-soon::before { background: var(--grad-soon); }
         .card-bad::before { background: var(--grad-bad); }
         
-        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; }
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
         .card-country { font-size: 24px; font-weight: 800; margin: 0 0 6px 0; color: var(--text-main); letter-spacing: -0.03em; }
-        .card-time { font-size: 36px; font-weight: 900; margin: 0; color: var(--text-main); font-variant-numeric: tabular-nums; letter-spacing: -0.04em; line-height: 1; }
+        
+        /* New Styles for Offset */
+        .time-container { text-align: right; }
+        .card-time { font-size: 36px; font-weight: 900; margin: 0 0 4px 0; color: var(--text-main); font-variant-numeric: tabular-nums; letter-spacing: -0.04em; line-height: 1; }
+        .card-offset { font-size: 14px; font-weight: 600; color: var(--text-muted); margin: 0; opacity: 0.8; }
         
         .badges { display: flex; gap: 10px; flex-wrap: wrap; margin-top: auto; margin-bottom: 24px; }
         .badge { padding: 6px 14px; border-radius: 100px; font-size: 12px; font-weight: 700; letter-spacing: 0.03em; display: inline-flex; align-items: center; }
@@ -211,7 +233,7 @@ export default function App() {
               onChange={(e) => setAssociateLocation(e.target.value)}
             >
               <option value="IN">🇮🇳 India Office</option>
-              <option value="US">🇺🇸 US Office</option>
+              <option value="US">🇺🇸 US Office (EST)</option>
               <option value="UK">🇬🇧 UK Office</option>
             </select>
 
@@ -264,7 +286,10 @@ export default function App() {
                     <div>
                       <div className="card-header">
                         <h2 className="card-country">{country.name}</h2>
-                        <p className="card-time">{country.localTimeString}</p>
+                        <div className="time-container">
+                          <p className="card-time">{country.localTimeString}</p>
+                          <p className="card-offset">{country.offsetText}</p>
+                        </div>
                       </div>
                       <div className="badges">
                         {country.isEU && <span className="badge badge-eu">🇪🇺 GDPR</span>}
