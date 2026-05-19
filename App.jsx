@@ -7,9 +7,9 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [ticker, setTicker] = useState(Date.now());
   
-  // Initialize state from localStorage
+  // Initialize state from localStorage, defaulting to India ('IN')
   const [associateLocation, setAssociateLocation] = useState(() => {
-    return localStorage.getItem('associateLocation') || 'US';
+    return localStorage.getItem('associateLocation') || 'IN';
   });
   
   const [selectedCountries, setSelectedCountries] = useState(() => {
@@ -17,7 +17,7 @@ export default function App() {
     return saved ? JSON.parse(saved) : [];
   });
 
-  // State to manage the open/close status and input values of the time converters
+  // State to manage the open/close status and split date/time inputs
   const [converterState, setConverterState] = useState({});
 
   // Map the dropdown locations to standard timezones
@@ -88,7 +88,7 @@ export default function App() {
     }
   };
 
-  // Logic to handle opening/closing the converter and updating the time input
+  // Open/Close the converter panel
   const toggleConverter = (countryName) => {
     setConverterState(prev => ({
       ...prev,
@@ -99,12 +99,35 @@ export default function App() {
     }));
   };
 
-  const handleTimeChange = (countryName, value) => {
+  // Handle individual date and time changes
+  const handleDateTimeChange = (countryName, field, value) => {
     setConverterState(prev => ({
       ...prev,
       [countryName]: {
         ...prev[countryName],
-        time: value
+        [field]: value
+      }
+    }));
+  };
+
+  // Logic for Quick Preset Buttons
+  const applyPreset = (countryName, daysToAdd, targetHour) => {
+    const d = new Date();
+    d.setDate(d.getDate() + daysToAdd);
+    
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    
+    const dateStr = `${yyyy}-${mm}-${dd}`;
+    const timeStr = `${String(targetHour).padStart(2, '0')}:00`;
+
+    setConverterState(prev => ({
+      ...prev,
+      [countryName]: {
+        ...prev[countryName],
+        date: dateStr,
+        time: timeStr
       }
     }));
   };
@@ -227,15 +250,25 @@ export default function App() {
         .badge-soon { background-color: var(--bg-soon); color: #B45309; border: 1px solid rgba(245, 158, 11, 0.2); }
         .badge-bad { background-color: var(--bg-bad); color: #475569; border: 1px solid rgba(148, 163, 184, 0.2); }
         
-        /* New Converter Styles */
+        /* Upgraded Converter Styles */
         .btn-toggle-converter { background-color: #F8FAFC; color: #475569; border: 1px solid var(--border); padding: 6px 14px; border-radius: 100px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; }
         .btn-toggle-converter:hover { background-color: #E2E8F0; color: #0F172A; }
         
         .converter-panel { margin-bottom: 24px; padding: 20px; background-color: #F8FAFC; border-radius: 16px; border: 1px solid var(--border); animation: fadeIn 0.3s ease; }
-        .converter-panel label { display: block; font-size: 12px; font-weight: 800; color: var(--text-muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
-        .converter-input { width: 100%; padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border); font-family: inherit; font-size: 14px; margin-bottom: 16px; outline: none; transition: all 0.2s; background-color: #FFF; color: var(--text-main); }
+        .converter-panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .converter-panel-header label { font-size: 12px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 0; }
+        .btn-close { background: none; border: none; font-size: 20px; color: #94A3B8; cursor: pointer; line-height: 1; padding: 0; transition: color 0.2s; }
+        .btn-close:hover { color: #0F172A; }
+
+        .preset-container { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+        .preset-btn { background-color: #FFF; border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 12px; font-weight: 600; color: var(--color-eu); cursor: pointer; transition: all 0.2s; flex: 1; text-align: center; }
+        .preset-btn:hover { background-color: #EFF6FF; border-color: rgba(59, 130, 246, 0.3); }
+
+        .datetime-row { display: flex; gap: 12px; margin-bottom: 16px; }
+        .converter-input { flex: 1; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border); font-family: inherit; font-size: 14px; font-weight: 500; outline: none; transition: all 0.2s; background-color: #FFF; color: var(--text-main); }
         .converter-input:focus { border-color: var(--color-eu); box-shadow: 0 0 0 4px rgba(59,130,246,0.15); }
-        .converter-result { font-size: 14px; font-weight: 600; color: var(--text-muted); background: #FFF; padding: 16px; border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); }
+        
+        .converter-result { font-size: 14px; font-weight: 600; color: var(--text-muted); background: #FFF; padding: 16px; border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); border-left: 4px solid var(--color-eu); }
         .converter-result span { color: var(--text-main); font-weight: 800; display: block; margin-top: 6px; font-size: 18px; letter-spacing: -0.02em; }
         
         .btn-remove { width: 100%; padding: 14px; background-color: #FFF; border: 1px solid var(--border); border-radius: 12px; color: var(--text-muted); font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; margin-top: auto; }
@@ -306,13 +339,13 @@ export default function App() {
                 }
 
                 // Retrieve converter state for this specific card
-                const convState = converterState[country.name] || { isOpen: false, time: '' };
+                const convState = converterState[country.name] || { isOpen: false, date: '', time: '' };
                 let convertedTargetTime = null;
                 
-                // If the user has typed a time, parse it and convert it to the target country's time
-                if (convState.time) {
+                // Only attempt to convert if both date and time fields are populated
+                if (convState.date && convState.time) {
                   try {
-                    const dateObj = new Date(convState.time);
+                    const dateObj = new Date(`${convState.date}T${convState.time}`);
                     convertedTargetTime = new Intl.DateTimeFormat('en-US', {
                       timeZone: country.timezone,
                       weekday: 'short', month: 'short', day: 'numeric',
@@ -345,16 +378,34 @@ export default function App() {
                         </button>
                       </div>
 
-                      {/* Expandable Time Converter Panel */}
+                      {/* Upgraded Expandable Time Converter Panel */}
                       {convState.isOpen && (
                         <div className="converter-panel">
-                          <label>Enter Your Local Date & Time:</label>
-                          <input 
-                            type="datetime-local" 
-                            className="converter-input"
-                            value={convState.time}
-                            onChange={(e) => handleTimeChange(country.name, e.target.value)}
-                          />
+                          <div className="converter-panel-header">
+                            <label>Plan a Call</label>
+                            <button className="btn-close" onClick={() => toggleConverter(country.name)}>&times;</button>
+                          </div>
+                          
+                          <div className="preset-container">
+                            <button className="preset-btn" onClick={() => applyPreset(country.name, 1, 10)}>Tmrw 10 AM</button>
+                            <button className="preset-btn" onClick={() => applyPreset(country.name, 1, 14)}>Tmrw 2 PM</button>
+                            <button className="preset-btn" onClick={() => applyPreset(country.name, 3, 10)}>In 3 Days</button>
+                          </div>
+
+                          <div className="datetime-row">
+                            <input 
+                              type="date" 
+                              className="converter-input"
+                              value={convState.date}
+                              onChange={(e) => handleDateTimeChange(country.name, 'date', e.target.value)}
+                            />
+                            <input 
+                              type="time" 
+                              className="converter-input"
+                              value={convState.time}
+                              onChange={(e) => handleDateTimeChange(country.name, 'time', e.target.value)}
+                            />
+                          </div>
                           
                           {convertedTargetTime && (
                             <div className="converter-result">
