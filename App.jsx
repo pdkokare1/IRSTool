@@ -7,9 +7,9 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [ticker, setTicker] = useState(Date.now());
   
-  // Initialize state from localStorage, defaulting to India ('IN')
+  // Cache Buster applied: Changed key to 'associateLoc_v2' to force the new 'IN' default
   const [associateLocation, setAssociateLocation] = useState(() => {
-    return localStorage.getItem('associateLocation') || 'IN';
+    return localStorage.getItem('associateLoc_v2') || 'IN';
   });
   
   const [selectedCountries, setSelectedCountries] = useState(() => {
@@ -17,7 +17,6 @@ export default function App() {
     return saved ? JSON.parse(saved) : [];
   });
 
-  // State to manage the open/close status and split date/time inputs
   const [converterState, setConverterState] = useState({});
 
   // Map the dropdown locations to standard timezones
@@ -27,8 +26,15 @@ export default function App() {
     'UK': 'Europe/London'
   };
 
+  // Map the dropdown locations to readable labels for the UI
+  const officeLabels = {
+    'IN': 'India Office',
+    'US': 'US Office (EST)',
+    'UK': 'UK Office'
+  };
+
   // Save state whenever it changes
-  useEffect(() => localStorage.setItem('associateLocation', associateLocation), [associateLocation]);
+  useEffect(() => localStorage.setItem('associateLoc_v2', associateLocation), [associateLocation]);
   useEffect(() => localStorage.setItem('selectedCountries', JSON.stringify(selectedCountries)), [selectedCountries]);
 
   // Update the current live time every 60 seconds
@@ -88,7 +94,6 @@ export default function App() {
     }
   };
 
-  // Open/Close the converter panel
   const toggleConverter = (countryName) => {
     setConverterState(prev => ({
       ...prev,
@@ -99,7 +104,6 @@ export default function App() {
     }));
   };
 
-  // Handle individual date and time changes
   const handleDateTimeChange = (countryName, field, value) => {
     setConverterState(prev => ({
       ...prev,
@@ -110,7 +114,6 @@ export default function App() {
     }));
   };
 
-  // Logic for Quick Preset Buttons
   const applyPreset = (countryName, daysToAdd, targetHour) => {
     const d = new Date();
     d.setDate(d.getDate() + daysToAdd);
@@ -250,7 +253,6 @@ export default function App() {
         .badge-soon { background-color: var(--bg-soon); color: #B45309; border: 1px solid rgba(245, 158, 11, 0.2); }
         .badge-bad { background-color: var(--bg-bad); color: #475569; border: 1px solid rgba(148, 163, 184, 0.2); }
         
-        /* Upgraded Converter Styles */
         .btn-toggle-converter { background-color: #F8FAFC; color: #475569; border: 1px solid var(--border); padding: 6px 14px; border-radius: 100px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; }
         .btn-toggle-converter:hover { background-color: #E2E8F0; color: #0F172A; }
         
@@ -334,15 +336,13 @@ export default function App() {
                   statusText = "Good to Call";
                 } else if (country.callStatus === 'soon') {
                   cardClass = 'card-soon';
-                  badgeClass = 'badge-soon';
+                  badge,Class = 'badge-soon';
                   statusText = "Soon Available";
                 }
 
-                // Retrieve converter state for this specific card
                 const convState = converterState[country.name] || { isOpen: false, date: '', time: '' };
                 let convertedTargetTime = null;
                 
-                // Only attempt to convert if both date and time fields are populated
                 if (convState.date && convState.time) {
                   try {
                     const dateObj = new Date(`${convState.date}T${convState.time}`);
@@ -352,7 +352,7 @@ export default function App() {
                       hour: 'numeric', minute: 'numeric', hour12: true
                     }).format(dateObj);
                   } catch (e) {
-                    // Fail silently if incomplete date string
+                    // Fail silently
                   }
                 }
 
@@ -378,7 +378,6 @@ export default function App() {
                         </button>
                       </div>
 
-                      {/* Upgraded Expandable Time Converter Panel */}
                       {convState.isOpen && (
                         <div className="converter-panel">
                           <div className="converter-panel-header">
@@ -409,7 +408,7 @@ export default function App() {
                           
                           {convertedTargetTime && (
                             <div className="converter-result">
-                              Local time in {country.name} will be:
+                              When it is {convState.time} in the <strong>{officeLabels[associateLocation]}</strong>, local time in {country.name} will be:
                               <span>{convertedTargetTime}</span>
                             </div>
                           )}
