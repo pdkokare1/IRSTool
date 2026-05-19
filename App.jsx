@@ -262,10 +262,18 @@ export default function App() {
         .preset-btn { background-color: #FFF; border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 12px; font-weight: 600; color: var(--color-eu); cursor: pointer; transition: all 0.2s; flex: 1; text-align: center; }
         .preset-btn:hover { background-color: #EFF6FF; border-color: rgba(59, 130, 246, 0.3); }
 
-        .datetime-row { display: flex; gap: 12px; margin-bottom: 16px; }
+        .datetime-row { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; }
         .converter-input { flex: 1; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border); font-family: inherit; font-size: 14px; font-weight: 500; outline: none; transition: all 0.2s; background-color: #FFF; color: var(--text-main); }
         .converter-input:focus { border-color: var(--color-eu); box-shadow: 0 0 0 4px rgba(59,130,246,0.15); }
         
+        /* New custom time picker styles */
+        .time-picker-container { display: flex; gap: 6px; flex: 1; align-items: center; }
+        .time-select { padding: 12px 10px; border-radius: 10px; border: 1px solid var(--border); font-family: inherit; font-size: 14px; font-weight: 500; outline: none; transition: all 0.2s; background-color: #FFF; color: var(--text-main); cursor: pointer; appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 8px center; background-size: 12px; padding-right: 28px; }
+        .time-select:focus { border-color: var(--color-eu); box-shadow: 0 0 0 4px rgba(59,130,246,0.15); }
+        .ampm-toggle { display: flex; background: #F1F5F9; border-radius: 8px; padding: 4px; gap: 4px; }
+        .ampm-btn { border: none; background: transparent; padding: 6px 10px; font-size: 13px; font-weight: 700; color: #64748B; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+        .ampm-btn.active { background: #FFF; color: var(--color-eu); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
         .converter-result { font-size: 14px; font-weight: 600; color: var(--text-muted); background: #FFF; padding: 16px; border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); border-left: 4px solid var(--color-eu); }
         .converter-result span { color: var(--text-main); font-weight: 800; display: block; margin-top: 6px; font-size: 18px; letter-spacing: -0.02em; }
         
@@ -339,18 +347,43 @@ export default function App() {
                 const convState = converterState[country.name] || { isOpen: false, date: '', time: '' };
                 let convertedAssociateTime = null;
                 
+                // Helper to manage custom time picker changes behind the scenes
+                const handleTimePartChange = (part, value) => {
+                  const currentTime = convState.time || '09:00';
+                  let [hours, minutes] = currentTime.split(':');
+                  let isPM = parseInt(hours, 10) >= 12;
+                  let hr12 = parseInt(hours, 10) % 12 || 12;
+
+                  if (part === 'hour') hr12 = parseInt(value, 10);
+                  if (part === 'minute') minutes = value;
+                  if (part === 'ampm') isPM = value === 'PM';
+
+                  let newHours24 = hr12 === 12 ? (isPM ? 12 : 0) : (isPM ? hr12 + 12 : hr12);
+                  const newTime = `${String(newHours24).padStart(2, '0')}:${minutes.padStart(2, '0')}`;
+                  handleDateTimeChange(country.name, 'time', newTime);
+                };
+
+                // Time math for custom UI defaults
+                const currentT = convState.time || '09:00';
+                const [h24, m] = currentT.split(':');
+                const isPM = parseInt(h24, 10) >= 12;
+                const h12 = parseInt(h24, 10) % 12 || 12;
+                
                 // Reverse math logic: Convert target's input time to associate's local time
                 if (convState.date && convState.time) {
                   try {
-                    // Treat the input date as a generic absolute value
                     const inputDate = new Date(`${convState.date}T${convState.time}`);
-                    // Subtract the diffMins to shift the time backwards/forwards to the associate's timezone
                     const associateDate = new Date(inputDate.getTime() - (country.diffMins * 60000));
                     
-                    convertedAssociateTime = new Intl.DateTimeFormat('en-US', {
-                      weekday: 'short', month: 'short', day: 'numeric',
+                    // Format DD/MM/YYYY, hh:mm A
+                    const dd = String(associateDate.getDate()).padStart(2, '0');
+                    const mm = String(associateDate.getMonth() + 1).padStart(2, '0');
+                    const yyyy = associateDate.getFullYear();
+                    const timeStr = new Intl.DateTimeFormat('en-US', {
                       hour: 'numeric', minute: 'numeric', hour12: true
                     }).format(associateDate);
+
+                    convertedAssociateTime = `${dd}/${mm}/${yyyy}, ${timeStr}`;
                   } catch (e) {
                     // Fail silently
                   }
@@ -398,17 +431,44 @@ export default function App() {
                               value={convState.date}
                               onChange={(e) => handleDateTimeChange(country.name, 'date', e.target.value)}
                             />
-                            <input 
-                              type="time" 
-                              className="converter-input"
-                              value={convState.time}
-                              onChange={(e) => handleDateTimeChange(country.name, 'time', e.target.value)}
-                            />
+                            
+                            {/* New Custom Time Picker UI */}
+                            <div className="time-picker-container">
+                              <select 
+                                className="time-select" 
+                                value={h12} 
+                                onChange={(e) => handleTimePartChange('hour', e.target.value)}
+                              >
+                                {[...Array(12)].map((_, i) => (
+                                  <option key={i + 1} value={i + 1}>{i + 1}</option>
+                                ))}
+                              </select>
+                              <span style={{ fontWeight: 'bold', color: 'var(--text-muted)' }}>:</span>
+                              <select 
+                                className="time-select" 
+                                value={m} 
+                                onChange={(e) => handleTimePartChange('minute', e.target.value)}
+                              >
+                                {['00','05','10','15','20','25','30','35','40','45','50','55'].map(min => (
+                                  <option key={min} value={min}>{min}</option>
+                                ))}
+                              </select>
+                              <div className="ampm-toggle">
+                                <button 
+                                  className={`ampm-btn ${!isPM ? 'active' : ''}`} 
+                                  onClick={() => handleTimePartChange('ampm', 'AM')}
+                                >AM</button>
+                                <button 
+                                  className={`ampm-btn ${isPM ? 'active' : ''}`} 
+                                  onClick={() => handleTimePartChange('ampm', 'PM')}
+                                >PM</button>
+                              </div>
+                            </div>
                           </div>
                           
                           {convertedAssociateTime && (
                             <div className="converter-result">
-                              When it is {convState.time} in {country.name}, it will be:
+                              When it is {convState.time && new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: 'numeric', hour12: true }).format(new Date(`2000-01-01T${convState.time}`))} in {country.name}, it will be:
                               <span style={{color: 'var(--color-eu)'}}>{convertedAssociateTime}</span>
                               in the <strong>{officeLabels[associateLocation]}</strong>.
                             </div>
