@@ -6,172 +6,188 @@ import { countries } from './countryData';
 export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [ticker, setTicker] = useState(Date.now());
+  const [selectedCountries, setSelectedCountries] = useState([]); // Tracks user selections
 
-  // Update the time every 60 seconds so the list stays accurate
+  // Update the time every 60 seconds
   useEffect(() => {
-    const interval = setInterval(() => {
-      setTicker(Date.now());
-    }, 60000);
+    const interval = setInterval(() => setTicker(Date.now()), 60000);
     return () => clearInterval(interval);
   }, []);
 
-  // Process and filter the countries
-  const processedCountries = countries
-    .filter(country => 
-      country.name.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    .map(country => {
-      // Get the current time in the target country
-      const options = { 
-        timeZone: country.timezone, 
-        hour: 'numeric', 
-        minute: 'numeric', 
-        hour12: true 
-      };
-      const formatter = new Intl.DateTimeFormat('en-US', options);
-      const localTimeString = formatter.format(new Date());
+  // Process time and status for all countries
+  const processedCountries = countries.map(country => {
+    const options = { timeZone: country.timezone, hour: 'numeric', minute: 'numeric', hour12: true };
+    const localTimeString = new Intl.DateTimeFormat('en-US', options).format(new Date());
 
-      // Get the exact hour (0-23) to determine the status bucket
-      const hourOptions = { 
-        timeZone: country.timezone, 
-        hour: 'numeric', 
-        hour12: false 
-      };
-      const hourFormatter = new Intl.DateTimeFormat('en-US', hourOptions);
-      const localHour = parseInt(hourFormatter.format(new Date()), 10);
+    const hourOptions = { timeZone: country.timezone, hour: 'numeric', hour12: false };
+    const localHour = parseInt(new Intl.DateTimeFormat('en-US', hourOptions).format(new Date()), 10);
 
-      // Determine the specific call status
-      let callStatus = 'unavailable';
-      if (localHour >= 9 && localHour < 17) {
-        callStatus = 'available'; // 9 AM to 5 PM
-      } else if (localHour >= 7 && localHour < 9) {
-        callStatus = 'soon'; // 7 AM to 9 AM
-      }
+    let callStatus = 'unavailable';
+    if (localHour >= 9 && localHour < 17) callStatus = 'available';
+    else if (localHour >= 7 && localHour < 9) callStatus = 'soon';
 
-      return {
-        ...country,
-        localTimeString,
-        callStatus
-      };
-    });
+    return { ...country, localTimeString, callStatus };
+  });
 
-  // Group countries into our three categories
-  const availableCountries = processedCountries.filter(c => c.callStatus === 'available');
-  const soonCountries = processedCountries.filter(c => c.callStatus === 'soon');
-  const unavailableCountries = processedCountries.filter(c => c.callStatus === 'unavailable');
+  // Filter drawer list based on search
+  const filteredForDrawer = processedCountries.filter(c => 
+    c.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
-  // Full-screen and tile-based styles
-  const styles = {
-    container: { fontFamily: 'Arial, sans-serif', width: '100%', padding: '20px', boxSizing: 'border-box', backgroundColor: '#f9f9f9', minHeight: '100vh' },
-    header: { textAlign: 'center', color: '#333', marginBottom: '30px' },
-    searchContainer: { maxWidth: '800px', margin: '0 auto 40px auto' },
-    searchInput: { width: '100%', padding: '15px', fontSize: '18px', borderRadius: '8px', border: '1px solid #ccc', boxSizing: 'border-box', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' },
-    section: { marginBottom: '50px' },
-    sectionTitle: { fontSize: '24px', color: '#444', borderBottom: '2px solid #ddd', paddingBottom: '10px', marginBottom: '20px' },
-    grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' },
-    card: { padding: '20px', borderRadius: '10px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', border: '1px solid #eaeaea', backgroundColor: '#fff', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' },
-    
-    // Status-specific top borders
-    cardAvailable: { borderTop: '6px solid #2ea44f' },
-    cardSoon: { borderTop: '6px solid #dbab09' },
-    cardUnavailable: { borderTop: '6px solid #d1d5da', opacity: 0.8 },
-    
-    cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' },
-    countryName: { fontSize: '22px', fontWeight: 'bold', margin: '0 0 5px 0', color: '#24292e' },
-    timeText: { fontSize: '28px', fontWeight: 'bold', margin: 0, color: '#333' },
-    
-    badgeContainer: { display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: 'auto' },
-    badgeEU: { backgroundColor: '#003399', color: 'white', padding: '6px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold' },
-    badgeStatus: { padding: '6px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold' },
-    badgeAvailable: { backgroundColor: '#e6ffed', color: '#2ea44f', border: '1px solid #2ea44f' },
-    badgeSoon: { backgroundColor: '#fff8c5', color: '#b08800', border: '1px solid #dbab09' },
-    badgeUnavailable: { backgroundColor: '#f6f8fa', color: '#6a737d', border: '1px solid #d1d5da' }
+  // Group the drawer list
+  const availableList = filteredForDrawer.filter(c => c.callStatus === 'available');
+  const soonList = filteredForDrawer.filter(c => c.callStatus === 'soon');
+  const unavailableList = filteredForDrawer.filter(c => c.callStatus === 'unavailable');
+
+  // Group the active canvas tiles
+  const activeTiles = processedCountries.filter(c => selectedCountries.includes(c.name));
+
+  // Handle adding/removing from the canvas
+  const toggleCountry = (countryName) => {
+    if (selectedCountries.includes(countryName)) {
+      setSelectedCountries(selectedCountries.filter(name => name !== countryName));
+    } else {
+      setSelectedCountries([...selectedCountries, countryName]);
+    }
   };
 
-  // Reusable Tile Component to keep the JSX clean
-  const CountryTile = ({ country }) => {
-    let cardStyle = styles.cardUnavailable;
-    let badgeStyle = styles.badgeUnavailable;
-    let statusText = "Outside Hours";
+  // Layout Styles
+  const styles = {
+    layout: { display: 'flex', height: '100vh', fontFamily: 'Arial, sans-serif', backgroundColor: '#f0f2f5', margin: 0 },
+    
+    // Left Drawer Styles
+    drawer: { width: '320px', minWidth: '320px', backgroundColor: '#ffffff', borderRight: '1px solid #e1e4e8', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' },
+    drawerHeader: { padding: '20px', borderBottom: '1px solid #e1e4e8', backgroundColor: '#f8f9fa' },
+    drawerTitle: { margin: '0 0 15px 0', fontSize: '18px', color: '#24292e' },
+    searchInput: { width: '100%', padding: '10px', fontSize: '14px', borderRadius: '6px', border: '1px solid #d1d5da', boxSizing: 'border-box' },
+    drawerScrollArea: { flex: 1, overflowY: 'auto', padding: '10px' },
+    listSection: { marginBottom: '20px' },
+    listHeader: { fontSize: '12px', textTransform: 'uppercase', color: '#586069', fontWeight: 'bold', margin: '0 0 10px 10px', letterSpacing: '0.5px' },
+    listItem: { padding: '10px', margin: '0 0 5px 0', borderRadius: '6px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', userSelect: 'none' },
+    listItemUnselected: { backgroundColor: 'transparent', border: '1px solid transparent' },
+    listItemSelected: { backgroundColor: '#e6ffed', border: '1px solid #2ea44f' },
+    
+    // Right Canvas Styles
+    canvas: { flex: 1, padding: '40px', overflowY: 'auto' },
+    canvasEmpty: { height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6a737d', fontSize: '20px', flexDirection: 'column' },
+    grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '25px', alignContent: 'start' },
+    
+    // Tile Styles
+    card: { padding: '25px', borderRadius: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', backgroundColor: '#fff', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' },
+    cardAvailable: { borderTop: '8px solid #2ea44f' },
+    cardSoon: { borderTop: '8px solid #dbab09' },
+    cardUnavailable: { borderTop: '8px solid #d1d5da' },
+    cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' },
+    countryName: { fontSize: '24px', fontWeight: 'bold', margin: '0 0 5px 0', color: '#24292e' },
+    timeText: { fontSize: '32px', fontWeight: 'bold', margin: 0, color: '#24292e' },
+    badgeContainer: { display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: 'auto' },
+    badgeEU: { backgroundColor: '#003399', color: 'white', padding: '6px 12px', borderRadius: '6px', fontSize: '13px', fontWeight: 'bold' },
+    badgeStatus: { padding: '6px 12px', borderRadius: '6px', fontSize: '13px', fontWeight: 'bold' },
+    badgeAvailable: { backgroundColor: '#e6ffed', color: '#2ea44f', border: '1px solid #2ea44f' },
+    badgeSoon: { backgroundColor: '#fff8c5', color: '#b08800', border: '1px solid #dbab09' },
+    badgeUnavailable: { backgroundColor: '#f6f8fa', color: '#6a737d', border: '1px solid #d1d5da' },
+    removeBtn: { marginTop: '15px', padding: '8px', width: '100%', backgroundColor: 'transparent', border: '1px solid #d1d5da', borderRadius: '6px', color: '#d73a49', cursor: 'pointer', fontWeight: 'bold' }
+  };
 
-    if (country.callStatus === 'available') {
-      cardStyle = styles.cardAvailable;
-      badgeStyle = styles.badgeAvailable;
-      statusText = "Good to Call";
-    } else if (country.callStatus === 'soon') {
-      cardStyle = styles.cardSoon;
-      badgeStyle = styles.badgeSoon;
-      statusText = "Soon Available";
-    }
-
+  // Reusable component for the sidebar list items
+  const DrawerList = ({ title, items, icon }) => {
+    if (items.length === 0) return null;
     return (
-      <div style={{ ...styles.card, ...cardStyle }}>
-        <div style={styles.cardHeader}>
-          <h2 style={styles.countryName}>{country.name}</h2>
-          <p style={styles.timeText}>{country.localTimeString}</p>
-        </div>
-        <div style={styles.badgeContainer}>
-          {country.isEU && <span style={styles.badgeEU}>🇪🇺 GDPR APPLIES</span>}
-          <span style={{ ...styles.badgeStatus, ...badgeStyle }}>
-            {statusText}
-          </span>
-        </div>
+      <div style={styles.listSection}>
+        <h3 style={styles.listHeader}>{icon} {title} ({items.length})</h3>
+        {items.map(country => {
+          const isSelected = selectedCountries.includes(country.name);
+          return (
+            <div 
+              key={country.name} 
+              onClick={() => toggleCountry(country.name)}
+              style={{...styles.listItem, ...(isSelected ? styles.listItemSelected : styles.listItemUnselected)}}
+            >
+              <span style={{fontWeight: isSelected ? 'bold' : 'normal', color: '#24292e'}}>{country.name}</span>
+              <span style={{color: '#6a737d', fontSize: '13px'}}>{country.localTimeString}</span>
+            </div>
+          );
+        })}
       </div>
     );
   };
 
   return (
-    <div style={styles.container}>
-      <h1 style={styles.header}>Global Calling & GDPR Dashboard</h1>
+    <div style={styles.layout}>
       
-      <div style={styles.searchContainer}>
-        <input 
-          type="text" 
-          placeholder="Search for a country..." 
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          style={styles.searchInput}
-        />
+      {/* LEFT DRAWER */}
+      <div style={styles.drawer}>
+        <div style={styles.drawerHeader}>
+          <h2 style={styles.drawerTitle}>Global Dial Directory</h2>
+          <input 
+            type="text" 
+            placeholder="Search directory..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={styles.searchInput}
+          />
+        </div>
+        
+        <div style={styles.drawerScrollArea}>
+          <DrawerList title="Good to Call" items={availableList} icon="🟢" />
+          <DrawerList title="Soon Available" items={soonList} icon="🟡" />
+          <DrawerList title="Outside Hours" items={unavailableList} icon="⚪" />
+          
+          {filteredForDrawer.length === 0 && (
+            <p style={{textAlign: 'center', color: '#6a737d', marginTop: '20px'}}>No matching countries.</p>
+          )}
+        </div>
       </div>
 
-      {availableCountries.length > 0 && (
-        <div style={styles.section}>
-          <h2 style={styles.sectionTitle}>🟢 Good to Call (9 AM - 5 PM)</h2>
-          <div style={styles.grid}>
-            {availableCountries.map((country, index) => (
-              <CountryTile key={index} country={country} />
-            ))}
+      {/* RIGHT CANVAS */}
+      <div style={styles.canvas}>
+        {selectedCountries.length === 0 ? (
+          <div style={styles.canvasEmpty}>
+            <h2>Your Workspace is Empty</h2>
+            <p>Select countries from the directory on the left to track them here.</p>
           </div>
-        </div>
-      )}
-
-      {soonCountries.length > 0 && (
-        <div style={styles.section}>
-          <h2 style={styles.sectionTitle}>🟡 Soon to be Available (7 AM - 9 AM)</h2>
+        ) : (
           <div style={styles.grid}>
-            {soonCountries.map((country, index) => (
-              <CountryTile key={index} country={country} />
-            ))}
-          </div>
-        </div>
-      )}
+            {activeTiles.map((country) => {
+              let cardStyle = styles.cardUnavailable;
+              let badgeStyle = styles.badgeUnavailable;
+              let statusText = "Outside Hours";
 
-      {unavailableCountries.length > 0 && (
-        <div style={styles.section}>
-          <h2 style={styles.sectionTitle}>⚪ Outside Hours</h2>
-          <div style={styles.grid}>
-            {unavailableCountries.map((country, index) => (
-              <CountryTile key={index} country={country} />
-            ))}
-          </div>
-        </div>
-      )}
+              if (country.callStatus === 'available') {
+                cardStyle = styles.cardAvailable;
+                badgeStyle = styles.badgeAvailable;
+                statusText = "Good to Call";
+              } else if (country.callStatus === 'soon') {
+                cardStyle = styles.cardSoon;
+                badgeStyle = styles.badgeSoon;
+                statusText = "Soon Available";
+              }
 
-      {processedCountries.length === 0 && (
-        <p style={{ textAlign: 'center', color: '#666', fontSize: '18px' }}>
-          No countries found matching your search.
-        </p>
-      )}
+              return (
+                <div key={country.name} style={{ ...styles.card, ...cardStyle }}>
+                  <div>
+                    <div style={styles.cardHeader}>
+                      <h2 style={styles.countryName}>{country.name}</h2>
+                      <p style={styles.timeText}>{country.localTimeString}</p>
+                    </div>
+                    <div style={styles.badgeContainer}>
+                      {country.isEU && <span style={styles.badgeEU}>🇪🇺 GDPR APPLIES</span>}
+                      <span style={{ ...styles.badgeStatus, ...badgeStyle }}>{statusText}</span>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => toggleCountry(country.name)} 
+                    style={styles.removeBtn}
+                  >
+                    Remove from Workspace
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
     </div>
   );
 }
