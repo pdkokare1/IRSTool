@@ -6,7 +6,7 @@ import { countries } from './countryData';
 export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [ticker, setTicker] = useState(Date.now());
-  const [selectedCountries, setSelectedCountries] = useState([]); // Tracks user selections
+  const [selectedCountries, setSelectedCountries] = useState([]);
 
   // Update the time every 60 seconds
   useEffect(() => {
@@ -51,60 +51,25 @@ export default function App() {
     }
   };
 
-  // Layout Styles
-  const styles = {
-    layout: { display: 'flex', height: '100vh', fontFamily: 'Arial, sans-serif', backgroundColor: '#f0f2f5', margin: 0 },
-    
-    // Left Drawer Styles
-    drawer: { width: '320px', minWidth: '320px', backgroundColor: '#ffffff', borderRight: '1px solid #e1e4e8', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' },
-    drawerHeader: { padding: '20px', borderBottom: '1px solid #e1e4e8', backgroundColor: '#f8f9fa' },
-    drawerTitle: { margin: '0 0 15px 0', fontSize: '18px', color: '#24292e' },
-    searchInput: { width: '100%', padding: '10px', fontSize: '14px', borderRadius: '6px', border: '1px solid #d1d5da', boxSizing: 'border-box' },
-    drawerScrollArea: { flex: 1, overflowY: 'auto', padding: '10px' },
-    listSection: { marginBottom: '20px' },
-    listHeader: { fontSize: '12px', textTransform: 'uppercase', color: '#586069', fontWeight: 'bold', margin: '0 0 10px 10px', letterSpacing: '0.5px' },
-    listItem: { padding: '10px', margin: '0 0 5px 0', borderRadius: '6px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', userSelect: 'none' },
-    listItemUnselected: { backgroundColor: 'transparent', border: '1px solid transparent' },
-    listItemSelected: { backgroundColor: '#e6ffed', border: '1px solid #2ea44f' },
-    
-    // Right Canvas Styles
-    canvas: { flex: 1, padding: '40px', overflowY: 'auto' },
-    canvasEmpty: { height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6a737d', fontSize: '20px', flexDirection: 'column' },
-    grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '25px', alignContent: 'start' },
-    
-    // Tile Styles
-    card: { padding: '25px', borderRadius: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', backgroundColor: '#fff', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' },
-    cardAvailable: { borderTop: '8px solid #2ea44f' },
-    cardSoon: { borderTop: '8px solid #dbab09' },
-    cardUnavailable: { borderTop: '8px solid #d1d5da' },
-    cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' },
-    countryName: { fontSize: '24px', fontWeight: 'bold', margin: '0 0 5px 0', color: '#24292e' },
-    timeText: { fontSize: '32px', fontWeight: 'bold', margin: 0, color: '#24292e' },
-    badgeContainer: { display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: 'auto' },
-    badgeEU: { backgroundColor: '#003399', color: 'white', padding: '6px 12px', borderRadius: '6px', fontSize: '13px', fontWeight: 'bold' },
-    badgeStatus: { padding: '6px 12px', borderRadius: '6px', fontSize: '13px', fontWeight: 'bold' },
-    badgeAvailable: { backgroundColor: '#e6ffed', color: '#2ea44f', border: '1px solid #2ea44f' },
-    badgeSoon: { backgroundColor: '#fff8c5', color: '#b08800', border: '1px solid #dbab09' },
-    badgeUnavailable: { backgroundColor: '#f6f8fa', color: '#6a737d', border: '1px solid #d1d5da' },
-    removeBtn: { marginTop: '15px', padding: '8px', width: '100%', backgroundColor: 'transparent', border: '1px solid #d1d5da', borderRadius: '6px', color: '#d73a49', cursor: 'pointer', fontWeight: 'bold' }
-  };
-
   // Reusable component for the sidebar list items
-  const DrawerList = ({ title, items, icon }) => {
+  const DrawerList = ({ title, items, dotClass }) => {
     if (items.length === 0) return null;
     return (
-      <div style={styles.listSection}>
-        <h3 style={styles.listHeader}>{icon} {title} ({items.length})</h3>
+      <div className="list-section">
+        <h3 className="list-header">{title} <span className="count">({items.length})</span></h3>
         {items.map(country => {
           const isSelected = selectedCountries.includes(country.name);
           return (
             <div 
               key={country.name} 
               onClick={() => toggleCountry(country.name)}
-              style={{...styles.listItem, ...(isSelected ? styles.listItemSelected : styles.listItemUnselected)}}
+              className={`list-item ${isSelected ? 'selected' : ''}`}
             >
-              <span style={{fontWeight: isSelected ? 'bold' : 'normal', color: '#24292e'}}>{country.name}</span>
-              <span style={{color: '#6a737d', fontSize: '13px'}}>{country.localTimeString}</span>
+              <div className="list-item-left">
+                <span className={`status-dot ${dotClass}`}></span>
+                <span className="country-name">{country.name}</span>
+              </div>
+              <span className="time-preview">{country.localTimeString}</span>
             </div>
           );
         })}
@@ -113,81 +78,161 @@ export default function App() {
   };
 
   return (
-    <div style={styles.layout}>
-      
-      {/* LEFT DRAWER */}
-      <div style={styles.drawer}>
-        <div style={styles.drawerHeader}>
-          <h2 style={styles.drawerTitle}>Global Dial Directory</h2>
-          <input 
-            type="text" 
-            placeholder="Search directory..." 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={styles.searchInput}
-          />
-        </div>
-        
-        <div style={styles.drawerScrollArea}>
-          <DrawerList title="Good to Call" items={availableList} icon="🟢" />
-          <DrawerList title="Soon Available" items={soonList} icon="🟡" />
-          <DrawerList title="Outside Hours" items={unavailableList} icon="⚪" />
+    <>
+      {/* Embedded CSS for Premium Styling */}
+      <style>{`
+        :root {
+          --bg-main: #F3F4F6;
+          --bg-drawer: #FFFFFF;
+          --text-main: #111827;
+          --text-muted: #6B7280;
+          --border: #E5E7EB;
+          --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+          --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+          --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
           
-          {filteredForDrawer.length === 0 && (
-            <p style={{textAlign: 'center', color: '#6a737d', marginTop: '20px'}}>No matching countries.</p>
+          /* Status Colors */
+          --color-good: #10B981;
+          --bg-good: #ECFDF5;
+          --color-soon: #F59E0B;
+          --bg-soon: #FFFBEB;
+          --color-bad: #9CA3AF;
+          --bg-bad: #F9FAFB;
+          --color-eu: #3B82F6;
+        }
+
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-main); color: var(--text-main); }
+        
+        .layout { display: flex; height: 100vh; overflow: hidden; }
+        
+        /* Drawer Styles */
+        .drawer { width: 340px; min-width: 340px; background-color: var(--bg-drawer); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 10; box-shadow: var(--shadow-sm); }
+        .drawer-header { padding: 24px; border-bottom: 1px solid var(--border); }
+        .drawer-title { margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: var(--text-main); letter-spacing: -0.5px; }
+        .search-input { width: 100%; padding: 12px 16px; font-size: 14px; border-radius: 8px; border: 1px solid var(--border); box-sizing: border-box; outline: none; transition: border-color 0.2s, box-shadow 0.2s; background-color: #F9FAFB; }
+        .search-input:focus { border-color: var(--color-eu); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); background-color: #FFF; }
+        .drawer-scroll { flex: 1; overflow-y: auto; padding: 16px 24px; }
+        
+        /* List Styles */
+        .list-section { margin-bottom: 24px; }
+        .list-header { font-size: 12px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin: 0 0 12px 0; letter-spacing: 0.05em; display: flex; align-items: center; }
+        .list-header .count { margin-left: 6px; opacity: 0.6; }
+        .list-item { padding: 10px 12px; margin: 0 -12px 4px -12px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s ease; user-select: none; border: 1px solid transparent; }
+        .list-item:hover { background-color: #F3F4F6; }
+        .list-item.selected { background-color: var(--bg-good); border-color: rgba(16, 185, 129, 0.2); }
+        .list-item-left { display: flex; align-items: center; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; margin-right: 12px; }
+        .dot-good { background-color: var(--color-good); box-shadow: 0 0 0 2px var(--bg-good); }
+        .dot-soon { background-color: var(--color-soon); box-shadow: 0 0 0 2px var(--bg-soon); }
+        .dot-bad { background-color: var(--color-bad); }
+        .country-name { font-weight: 500; font-size: 14px; }
+        .selected .country-name { color: var(--color-good); font-weight: 600; }
+        .time-preview { font-size: 13px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+        
+        /* Canvas Styles */
+        .canvas { flex: 1; padding: 48px; overflow-y: auto; background-color: var(--bg-main); }
+        .canvas-empty { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); text-align: center; }
+        .canvas-empty h2 { font-size: 24px; font-weight: 600; color: var(--text-main); margin-bottom: 8px; }
+        .canvas-empty p { font-size: 16px; max-width: 400px; line-height: 1.5; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 24px; align-content: start; }
+        
+        /* Card Styles */
+        .card { background-color: #FFF; padding: 24px; border-radius: 16px; display: flex; flex-direction: column; box-shadow: var(--shadow-sm); border: 1px solid var(--border); transition: transform 0.2s ease, box-shadow 0.2s ease; position: relative; overflow: hidden; }
+        .card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+        .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 6px; }
+        .card-good::before { background-color: var(--color-good); }
+        .card-soon::before { background-color: var(--color-soon); }
+        .card-bad::before { background-color: var(--color-bad); }
+        
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+        .card-country { font-size: 22px; font-weight: 700; margin: 0 0 4px 0; color: var(--text-main); letter-spacing: -0.5px; }
+        .card-time { font-size: 32px; font-weight: 800; margin: 0; color: var(--text-main); font-variant-numeric: tabular-nums; letter-spacing: -1px; }
+        
+        .badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: auto; margin-bottom: 20px; }
+        .badge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; letter-spacing: 0.02em; display: inline-flex; align-items: center; }
+        .badge-eu { background-color: #EFF6FF; color: var(--color-eu); border: 1px solid rgba(59, 130, 246, 0.2); }
+        .badge-good { background-color: var(--bg-good); color: #047857; border: 1px solid rgba(16, 185, 129, 0.2); }
+        .badge-soon { background-color: var(--bg-soon); color: #B45309; border: 1px solid rgba(245, 158, 11, 0.2); }
+        .badge-bad { background-color: var(--bg-bad); color: #4B5563; border: 1px solid rgba(156, 163, 175, 0.2); }
+        
+        .btn-remove { width: 100%; padding: 10px; background-color: transparent; border: 1px solid var(--border); border-radius: 8px; color: var(--text-muted); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+        .btn-remove:hover { background-color: #FEF2F2; color: #EF4444; border-color: #FECACA; }
+      `}</style>
+
+      <div className="layout">
+        {/* LEFT DRAWER */}
+        <div className="drawer">
+          <div className="drawer-header">
+            <h2 className="drawer-title">Global Directory</h2>
+            <input 
+              type="text" 
+              placeholder="Search countries..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="search-input"
+            />
+          </div>
+          
+          <div className="drawer-scroll">
+            <DrawerList title="Good to Call" items={availableList} dotClass="dot-good" />
+            <DrawerList title="Soon Available" items={soonList} dotClass="dot-soon" />
+            <DrawerList title="Outside Hours" items={unavailableList} dotClass="dot-bad" />
+            
+            {filteredForDrawer.length === 0 && (
+              <p style={{textAlign: 'center', color: 'var(--text-muted)', marginTop: '20px', fontSize: '14px'}}>No matching countries found.</p>
+            )}
+          </div>
+        </div>
+
+        {/* RIGHT CANVAS */}
+        <div className="canvas">
+          {selectedCountries.length === 0 ? (
+            <div className="canvas-empty">
+              <h2>Your workspace is empty</h2>
+              <p>Select countries from the directory on the left to pin them to your active dashboard.</p>
+            </div>
+          ) : (
+            <div className="grid">
+              {activeTiles.map((country) => {
+                let cardClass = 'card-bad';
+                let badgeClass = 'badge-bad';
+                let statusText = "Outside Hours";
+
+                if (country.callStatus === 'available') {
+                  cardClass = 'card-good';
+                  badgeClass = 'badge-good';
+                  statusText = "Good to Call";
+                } else if (country.callStatus === 'soon') {
+                  cardClass = 'card-soon';
+                  badgeClass = 'badge-soon';
+                  statusText = "Soon Available";
+                }
+
+                return (
+                  <div key={country.name} className={`card ${cardClass}`}>
+                    <div>
+                      <div className="card-header">
+                        <h2 className="card-country">{country.name}</h2>
+                        <p className="card-time">{country.localTimeString}</p>
+                      </div>
+                      <div className="badges">
+                        {country.isEU && <span className="badge badge-eu">🇪🇺 GDPR</span>}
+                        <span className={`badge ${badgeClass}`}>{statusText}</span>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => toggleCountry(country.name)} 
+                      className="btn-remove"
+                    >
+                      Remove from Canvas
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
       </div>
-
-      {/* RIGHT CANVAS */}
-      <div style={styles.canvas}>
-        {selectedCountries.length === 0 ? (
-          <div style={styles.canvasEmpty}>
-            <h2>Your Workspace is Empty</h2>
-            <p>Select countries from the directory on the left to track them here.</p>
-          </div>
-        ) : (
-          <div style={styles.grid}>
-            {activeTiles.map((country) => {
-              let cardStyle = styles.cardUnavailable;
-              let badgeStyle = styles.badgeUnavailable;
-              let statusText = "Outside Hours";
-
-              if (country.callStatus === 'available') {
-                cardStyle = styles.cardAvailable;
-                badgeStyle = styles.badgeAvailable;
-                statusText = "Good to Call";
-              } else if (country.callStatus === 'soon') {
-                cardStyle = styles.cardSoon;
-                badgeStyle = styles.badgeSoon;
-                statusText = "Soon Available";
-              }
-
-              return (
-                <div key={country.name} style={{ ...styles.card, ...cardStyle }}>
-                  <div>
-                    <div style={styles.cardHeader}>
-                      <h2 style={styles.countryName}>{country.name}</h2>
-                      <p style={styles.timeText}>{country.localTimeString}</p>
-                    </div>
-                    <div style={styles.badgeContainer}>
-                      {country.isEU && <span style={styles.badgeEU}>🇪🇺 GDPR APPLIES</span>}
-                      <span style={{ ...styles.badgeStatus, ...badgeStyle }}>{statusText}</span>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => toggleCountry(country.name)} 
-                    style={styles.removeBtn}
-                  >
-                    Remove from Workspace
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-    </div>
+    </>
   );
 }
