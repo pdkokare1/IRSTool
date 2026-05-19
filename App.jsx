@@ -7,6 +7,9 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [ticker, setTicker] = useState(Date.now());
   const [selectedCountries, setSelectedCountries] = useState([]);
+  
+  // New State for Associate Location
+  const [associateLocation, setAssociateLocation] = useState('US');
 
   // Update the time every 60 seconds
   useEffect(() => {
@@ -82,81 +85,102 @@ export default function App() {
       {/* Embedded CSS for Premium Styling */}
       <style>{`
         :root {
-          --bg-main: #F3F4F6;
+          --bg-main: #F4F7F9;
+          --bg-gradient: linear-gradient(135deg, #F4F7F9 0%, #E8EEF2 100%);
           --bg-drawer: #FFFFFF;
-          --text-main: #111827;
-          --text-muted: #6B7280;
-          --border: #E5E7EB;
-          --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-          --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-          --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+          --text-main: #0F172A;
+          --text-muted: #64748B;
+          --border: #E2E8F0;
           
-          /* Status Colors */
+          /* Premium Shadows */
+          --shadow-sm: 0 2px 4px rgba(15, 23, 42, 0.04);
+          --shadow-card: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 4px 10px -5px rgba(15, 23, 42, 0.04);
+          --shadow-hover: 0 20px 35px -10px rgba(15, 23, 42, 0.12), 0 10px 15px -5px rgba(15, 23, 42, 0.08);
+          
+          /* Vibrant Status Colors */
           --color-good: #10B981;
+          --grad-good: linear-gradient(135deg, #10B981 0%, #059669 100%);
           --bg-good: #ECFDF5;
+          
           --color-soon: #F59E0B;
+          --grad-soon: linear-gradient(135deg, #FBBF24 0%, #D97706 100%);
           --bg-soon: #FFFBEB;
-          --color-bad: #9CA3AF;
-          --bg-bad: #F9FAFB;
+          
+          --color-bad: #94A3B8;
+          --grad-bad: linear-gradient(135deg, #CBD5E1 0%, #94A3B8 100%);
+          --bg-bad: #F8FAFC;
+          
           --color-eu: #3B82F6;
         }
 
-        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-main); color: var(--text-main); }
+        body { margin: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg-gradient); color: var(--text-main); -webkit-font-smoothing: antialiased; }
         
         .layout { display: flex; height: 100vh; overflow: hidden; }
         
         /* Drawer Styles */
-        .drawer { width: 340px; min-width: 340px; background-color: var(--bg-drawer); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 10; box-shadow: var(--shadow-sm); }
-        .drawer-header { padding: 24px; border-bottom: 1px solid var(--border); }
-        .drawer-title { margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: var(--text-main); letter-spacing: -0.5px; }
-        .search-input { width: 100%; padding: 12px 16px; font-size: 14px; border-radius: 8px; border: 1px solid var(--border); box-sizing: border-box; outline: none; transition: border-color 0.2s, box-shadow 0.2s; background-color: #F9FAFB; }
-        .search-input:focus { border-color: var(--color-eu); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); background-color: #FFF; }
-        .drawer-scroll { flex: 1; overflow-y: auto; padding: 16px 24px; }
+        .drawer { width: 360px; min-width: 360px; background-color: var(--bg-drawer); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 10; box-shadow: 4px 0 24px rgba(15, 23, 42, 0.03); }
+        .drawer-header { padding: 28px 24px 20px; border-bottom: 1px solid var(--border); }
+        .drawer-title { margin: 0 0 20px 0; font-size: 22px; font-weight: 800; color: var(--text-main); letter-spacing: -0.03em; }
+        
+        /* Premium Segmented Control for Location */
+        .location-selector { display: flex; background-color: #F1F5F9; padding: 4px; border-radius: 12px; margin-bottom: 20px; }
+        .loc-btn { flex: 1; padding: 8px 12px; border: none; background: transparent; border-radius: 8px; font-size: 13px; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .loc-btn.active { background-color: #FFFFFF; color: var(--text-main); box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08); }
+        .loc-btn:hover:not(.active) { color: var(--text-main); }
+
+        .search-input { width: 100%; padding: 14px 16px; font-size: 14px; border-radius: 10px; border: 1px solid var(--border); box-sizing: border-box; outline: none; transition: all 0.2s; background-color: #F8FAFC; color: var(--text-main); }
+        .search-input:focus { border-color: var(--color-eu); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15); background-color: #FFF; }
+        .search-input::placeholder { color: #94A3B8; }
+        
+        .drawer-scroll { flex: 1; overflow-y: auto; padding: 20px 24px; }
         
         /* List Styles */
-        .list-section { margin-bottom: 24px; }
-        .list-header { font-size: 12px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin: 0 0 12px 0; letter-spacing: 0.05em; display: flex; align-items: center; }
-        .list-header .count { margin-left: 6px; opacity: 0.6; }
-        .list-item { padding: 10px 12px; margin: 0 -12px 4px -12px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s ease; user-select: none; border: 1px solid transparent; }
-        .list-item:hover { background-color: #F3F4F6; }
-        .list-item.selected { background-color: var(--bg-good); border-color: rgba(16, 185, 129, 0.2); }
+        .list-section { margin-bottom: 28px; }
+        .list-header { font-size: 12px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin: 0 0 14px 0; letter-spacing: 0.08em; display: flex; align-items: center; }
+        .list-header .count { margin-left: 6px; opacity: 0.7; font-weight: 600; }
+        .list-item { padding: 12px 14px; margin: 0 -14px 6px -14px; border-radius: 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s ease; user-select: none; border: 1px solid transparent; }
+        .list-item:hover { background-color: #F1F5F9; transform: translateX(2px); }
+        .list-item.selected { background-color: var(--bg-good); border-color: rgba(16, 185, 129, 0.25); transform: translateX(2px); }
         .list-item-left { display: flex; align-items: center; }
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; margin-right: 12px; }
-        .dot-good { background-color: var(--color-good); box-shadow: 0 0 0 2px var(--bg-good); }
-        .dot-soon { background-color: var(--color-soon); box-shadow: 0 0 0 2px var(--bg-soon); }
-        .dot-bad { background-color: var(--color-bad); }
-        .country-name { font-weight: 500; font-size: 14px; }
-        .selected .country-name { color: var(--color-good); font-weight: 600; }
-        .time-preview { font-size: 13px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 14px; }
+        .dot-good { background: var(--grad-good); box-shadow: 0 0 0 3px var(--bg-good); }
+        .dot-soon { background: var(--grad-soon); box-shadow: 0 0 0 3px var(--bg-soon); }
+        .dot-bad { background: var(--grad-bad); }
+        .country-name { font-weight: 600; font-size: 14px; color: #334155; }
+        .selected .country-name { color: #065F46; }
+        .time-preview { font-size: 13px; color: var(--text-muted); font-weight: 500; font-variant-numeric: tabular-nums; }
         
         /* Canvas Styles */
-        .canvas { flex: 1; padding: 48px; overflow-y: auto; background-color: var(--bg-main); }
-        .canvas-empty { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); text-align: center; }
-        .canvas-empty h2 { font-size: 24px; font-weight: 600; color: var(--text-main); margin-bottom: 8px; }
-        .canvas-empty p { font-size: 16px; max-width: 400px; line-height: 1.5; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 24px; align-content: start; }
+        .canvas { flex: 1; padding: 56px; overflow-y: auto; }
+        .canvas-empty { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); text-align: center; animation: fadeIn 0.5s ease-in-out; }
+        .canvas-empty h2 { font-size: 28px; font-weight: 800; color: var(--text-main); margin-bottom: 12px; letter-spacing: -0.03em; }
+        .canvas-empty p { font-size: 16px; max-width: 420px; line-height: 1.6; color: #64748B; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 28px; align-content: start; }
         
-        /* Card Styles */
-        .card { background-color: #FFF; padding: 24px; border-radius: 16px; display: flex; flex-direction: column; box-shadow: var(--shadow-sm); border: 1px solid var(--border); transition: transform 0.2s ease, box-shadow 0.2s ease; position: relative; overflow: hidden; }
-        .card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+        /* Premium Card Styles */
+        .card { background-color: #FFF; padding: 28px; border-radius: 20px; display: flex; flex-direction: column; box-shadow: var(--shadow-card); border: 1px solid rgba(255,255,255,0.8); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden; animation: slideUp 0.4s ease-out; }
+        .card:hover { transform: translateY(-6px); box-shadow: var(--shadow-hover); }
         .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 6px; }
-        .card-good::before { background-color: var(--color-good); }
-        .card-soon::before { background-color: var(--color-soon); }
-        .card-bad::before { background-color: var(--color-bad); }
+        .card-good::before { background: var(--grad-good); }
+        .card-soon::before { background: var(--grad-soon); }
+        .card-bad::before { background: var(--grad-bad); }
         
-        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
-        .card-country { font-size: 22px; font-weight: 700; margin: 0 0 4px 0; color: var(--text-main); letter-spacing: -0.5px; }
-        .card-time { font-size: 32px; font-weight: 800; margin: 0; color: var(--text-main); font-variant-numeric: tabular-nums; letter-spacing: -1px; }
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; }
+        .card-country { font-size: 24px; font-weight: 800; margin: 0 0 6px 0; color: var(--text-main); letter-spacing: -0.03em; }
+        .card-time { font-size: 36px; font-weight: 900; margin: 0; color: var(--text-main); font-variant-numeric: tabular-nums; letter-spacing: -0.04em; line-height: 1; }
         
-        .badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: auto; margin-bottom: 20px; }
-        .badge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; letter-spacing: 0.02em; display: inline-flex; align-items: center; }
+        .badges { display: flex; gap: 10px; flex-wrap: wrap; margin-top: auto; margin-bottom: 24px; }
+        .badge { padding: 6px 14px; border-radius: 100px; font-size: 12px; font-weight: 700; letter-spacing: 0.03em; display: inline-flex; align-items: center; }
         .badge-eu { background-color: #EFF6FF; color: var(--color-eu); border: 1px solid rgba(59, 130, 246, 0.2); }
         .badge-good { background-color: var(--bg-good); color: #047857; border: 1px solid rgba(16, 185, 129, 0.2); }
         .badge-soon { background-color: var(--bg-soon); color: #B45309; border: 1px solid rgba(245, 158, 11, 0.2); }
-        .badge-bad { background-color: var(--bg-bad); color: #4B5563; border: 1px solid rgba(156, 163, 175, 0.2); }
+        .badge-bad { background-color: var(--bg-bad); color: #475569; border: 1px solid rgba(148, 163, 184, 0.2); }
         
-        .btn-remove { width: 100%; padding: 10px; background-color: transparent; border: 1px solid var(--border); border-radius: 8px; color: var(--text-muted); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+        .btn-remove { width: 100%; padding: 12px; background-color: #F8FAFC; border: 1px solid var(--border); border-radius: 12px; color: var(--text-muted); font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; }
         .btn-remove:hover { background-color: #FEF2F2; color: #EF4444; border-color: #FECACA; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
       `}</style>
 
       <div className="layout">
@@ -164,6 +188,29 @@ export default function App() {
         <div className="drawer">
           <div className="drawer-header">
             <h2 className="drawer-title">Global Directory</h2>
+            
+            {/* New Location Selector */}
+            <div className="location-selector">
+              <button 
+                className={`loc-btn ${associateLocation === 'IN' ? 'active' : ''}`}
+                onClick={() => setAssociateLocation('IN')}
+              >
+                🇮🇳 India
+              </button>
+              <button 
+                className={`loc-btn ${associateLocation === 'US' ? 'active' : ''}`}
+                onClick={() => setAssociateLocation('US')}
+              >
+                🇺🇸 US
+              </button>
+              <button 
+                className={`loc-btn ${associateLocation === 'UK' ? 'active' : ''}`}
+                onClick={() => setAssociateLocation('UK')}
+              >
+                🇬🇧 UK
+              </button>
+            </div>
+
             <input 
               type="text" 
               placeholder="Search countries..." 
@@ -179,7 +226,7 @@ export default function App() {
             <DrawerList title="Outside Hours" items={unavailableList} dotClass="dot-bad" />
             
             {filteredForDrawer.length === 0 && (
-              <p style={{textAlign: 'center', color: 'var(--text-muted)', marginTop: '20px', fontSize: '14px'}}>No matching countries found.</p>
+              <p style={{textAlign: 'center', color: 'var(--text-muted)', marginTop: '24px', fontSize: '14px', fontWeight: '500'}}>No matching countries found.</p>
             )}
           </div>
         </div>
@@ -188,8 +235,8 @@ export default function App() {
         <div className="canvas">
           {selectedCountries.length === 0 ? (
             <div className="canvas-empty">
-              <h2>Your workspace is empty</h2>
-              <p>Select countries from the directory on the left to pin them to your active dashboard.</p>
+              <h2>Your Workspace is Empty</h2>
+              <p>Select targets from the directory on the left to pin them to your active calling dashboard.</p>
             </div>
           ) : (
             <div className="grid">
