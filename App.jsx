@@ -17,10 +17,13 @@ export default function App() {
     return saved ? JSON.parse(saved) : [];
   });
 
+  // State to manage the open/close status and input values of the time converters
+  const [converterState, setConverterState] = useState({});
+
   // Map the dropdown locations to standard timezones
   const officeTimezones = {
     'IN': 'Asia/Kolkata',
-    'US': 'America/New_York', // Anchoring US to Eastern Time
+    'US': 'America/New_York',
     'UK': 'Europe/London'
   };
 
@@ -28,7 +31,7 @@ export default function App() {
   useEffect(() => localStorage.setItem('associateLocation', associateLocation), [associateLocation]);
   useEffect(() => localStorage.setItem('selectedCountries', JSON.stringify(selectedCountries)), [selectedCountries]);
 
-  // Update the time every 60 seconds
+  // Update the current live time every 60 seconds
   useEffect(() => {
     const interval = setInterval(() => setTicker(Date.now()), 60000);
     return () => clearInterval(interval);
@@ -39,11 +42,9 @@ export default function App() {
     const currentAssociateTz = officeTimezones[associateLocation];
     const now = new Date();
 
-    // 1. Get readable time string
     const options = { timeZone: country.timezone, hour: 'numeric', minute: 'numeric', hour12: true };
     const localTimeString = new Intl.DateTimeFormat('en-US', options).format(now);
 
-    // 2. Get hour for call status
     const hourOptions = { timeZone: country.timezone, hour: 'numeric', hour12: false };
     const localHour = parseInt(new Intl.DateTimeFormat('en-US', hourOptions).format(now), 10);
 
@@ -51,7 +52,6 @@ export default function App() {
     if (localHour >= 9 && localHour < 17) callStatus = 'available';
     else if (localHour >= 7 && localHour < 9) callStatus = 'soon';
 
-    // 3. Calculate Relative Time Offset (handles DST perfectly)
     const dateAssociate = new Date(now.toLocaleString('en-US', { timeZone: currentAssociateTz }));
     const dateTarget = new Date(now.toLocaleString('en-US', { timeZone: country.timezone }));
     
@@ -70,20 +70,16 @@ export default function App() {
     return { ...country, localTimeString, callStatus, offsetText };
   });
 
-  // Filter drawer list based on search
   const filteredForDrawer = processedCountries.filter(c => 
     c.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Group the drawer list
   const availableList = filteredForDrawer.filter(c => c.callStatus === 'available');
   const soonList = filteredForDrawer.filter(c => c.callStatus === 'soon');
   const unavailableList = filteredForDrawer.filter(c => c.callStatus === 'unavailable');
 
-  // Group the active canvas tiles
   const activeTiles = processedCountries.filter(c => selectedCountries.includes(c.name));
 
-  // Handle adding/removing from the canvas
   const toggleCountry = (countryName) => {
     if (selectedCountries.includes(countryName)) {
       setSelectedCountries(selectedCountries.filter(name => name !== countryName));
@@ -92,7 +88,27 @@ export default function App() {
     }
   };
 
-  // Reusable component for the sidebar list items
+  // Logic to handle opening/closing the converter and updating the time input
+  const toggleConverter = (countryName) => {
+    setConverterState(prev => ({
+      ...prev,
+      [countryName]: {
+        ...prev[countryName],
+        isOpen: !prev[countryName]?.isOpen
+      }
+    }));
+  };
+
+  const handleTimeChange = (countryName, value) => {
+    setConverterState(prev => ({
+      ...prev,
+      [countryName]: {
+        ...prev[countryName],
+        time: value
+      }
+    }));
+  };
+
   const DrawerList = ({ title, items, dotClass }) => {
     if (items.length === 0) return null;
     return (
@@ -123,7 +139,6 @@ export default function App() {
 
   return (
     <>
-      {/* Embedded CSS for Premium Styling */}
       <style>{`
         :root {
           --bg-main: #F4F7F9;
@@ -189,10 +204,10 @@ export default function App() {
         .canvas-empty { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); text-align: center; animation: fadeIn 0.5s ease-in-out; }
         .canvas-empty h2 { font-size: 28px; font-weight: 800; color: var(--text-main); margin-bottom: 12px; letter-spacing: -0.03em; }
         .canvas-empty p { font-size: 16px; max-width: 420px; line-height: 1.6; color: #64748B; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 28px; align-content: start; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 28px; align-content: start; }
         
-        .card { background-color: #FFF; padding: 28px; border-radius: 20px; display: flex; flex-direction: column; box-shadow: var(--shadow-card); border: 1px solid rgba(255,255,255,0.8); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden; animation: slideUp 0.4s ease-out; }
-        .card:hover { transform: translateY(-6px); box-shadow: var(--shadow-hover); }
+        .card { background-color: #FFF; padding: 28px; border-radius: 20px; display: flex; flex-direction: column; box-shadow: var(--shadow-card); border: 1px solid rgba(255,255,255,0.8); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; animation: slideUp 0.4s ease-out; }
+        .card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); }
         .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 6px; }
         .card-good::before { background: var(--grad-good); }
         .card-soon::before { background: var(--grad-soon); }
@@ -201,22 +216,32 @@ export default function App() {
         .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
         .card-country { font-size: 24px; font-weight: 800; margin: 0 0 6px 0; color: var(--text-main); letter-spacing: -0.03em; }
         
-        /* New Styles for Offset */
         .time-container { text-align: right; }
         .card-time { font-size: 36px; font-weight: 900; margin: 0 0 4px 0; color: var(--text-main); font-variant-numeric: tabular-nums; letter-spacing: -0.04em; line-height: 1; }
         .card-offset { font-size: 14px; font-weight: 600; color: var(--text-muted); margin: 0; opacity: 0.8; }
         
-        .badges { display: flex; gap: 10px; flex-wrap: wrap; margin-top: auto; margin-bottom: 24px; }
+        .badges { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 24px; }
         .badge { padding: 6px 14px; border-radius: 100px; font-size: 12px; font-weight: 700; letter-spacing: 0.03em; display: inline-flex; align-items: center; }
         .badge-eu { background-color: #EFF6FF; color: var(--color-eu); border: 1px solid rgba(59, 130, 246, 0.2); }
         .badge-good { background-color: var(--bg-good); color: #047857; border: 1px solid rgba(16, 185, 129, 0.2); }
         .badge-soon { background-color: var(--bg-soon); color: #B45309; border: 1px solid rgba(245, 158, 11, 0.2); }
         .badge-bad { background-color: var(--bg-bad); color: #475569; border: 1px solid rgba(148, 163, 184, 0.2); }
         
-        .btn-remove { width: 100%; padding: 12px; background-color: #F8FAFC; border: 1px solid var(--border); border-radius: 12px; color: var(--text-muted); font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; }
+        /* New Converter Styles */
+        .btn-toggle-converter { background-color: #F8FAFC; color: #475569; border: 1px solid var(--border); padding: 6px 14px; border-radius: 100px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; }
+        .btn-toggle-converter:hover { background-color: #E2E8F0; color: #0F172A; }
+        
+        .converter-panel { margin-bottom: 24px; padding: 20px; background-color: #F8FAFC; border-radius: 16px; border: 1px solid var(--border); animation: fadeIn 0.3s ease; }
+        .converter-panel label { display: block; font-size: 12px; font-weight: 800; color: var(--text-muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+        .converter-input { width: 100%; padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border); font-family: inherit; font-size: 14px; margin-bottom: 16px; outline: none; transition: all 0.2s; background-color: #FFF; color: var(--text-main); }
+        .converter-input:focus { border-color: var(--color-eu); box-shadow: 0 0 0 4px rgba(59,130,246,0.15); }
+        .converter-result { font-size: 14px; font-weight: 600; color: var(--text-muted); background: #FFF; padding: 16px; border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); }
+        .converter-result span { color: var(--text-main); font-weight: 800; display: block; margin-top: 6px; font-size: 18px; letter-spacing: -0.02em; }
+        
+        .btn-remove { width: 100%; padding: 14px; background-color: #FFF; border: 1px solid var(--border); border-radius: 12px; color: var(--text-muted); font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; margin-top: auto; }
         .btn-remove:hover { background-color: #FEF2F2; color: #EF4444; border-color: #FECACA; }
 
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
       `}</style>
 
@@ -226,7 +251,6 @@ export default function App() {
           <div className="drawer-header">
             <h2 className="drawer-title">Global Directory</h2>
             
-            {/* Persisted Location Dropdown */}
             <select 
               className="location-dropdown"
               value={associateLocation}
@@ -281,6 +305,24 @@ export default function App() {
                   statusText = "Soon Available";
                 }
 
+                // Retrieve converter state for this specific card
+                const convState = converterState[country.name] || { isOpen: false, time: '' };
+                let convertedTargetTime = null;
+                
+                // If the user has typed a time, parse it and convert it to the target country's time
+                if (convState.time) {
+                  try {
+                    const dateObj = new Date(convState.time);
+                    convertedTargetTime = new Intl.DateTimeFormat('en-US', {
+                      timeZone: country.timezone,
+                      weekday: 'short', month: 'short', day: 'numeric',
+                      hour: 'numeric', minute: 'numeric', hour12: true
+                    }).format(dateObj);
+                  } catch (e) {
+                    // Fail silently if incomplete date string
+                  }
+                }
+
                 return (
                   <div key={country.name} className={`card ${cardClass}`}>
                     <div>
@@ -291,11 +333,39 @@ export default function App() {
                           <p className="card-offset">{country.offsetText}</p>
                         </div>
                       </div>
+                      
                       <div className="badges">
                         {country.isEU && <span className="badge badge-eu">🇪🇺 GDPR</span>}
                         <span className={`badge ${badgeClass}`}>{statusText}</span>
+                        <button 
+                          onClick={() => toggleConverter(country.name)} 
+                          className="btn-toggle-converter"
+                        >
+                          ⏱️ Convert Time
+                        </button>
                       </div>
+
+                      {/* Expandable Time Converter Panel */}
+                      {convState.isOpen && (
+                        <div className="converter-panel">
+                          <label>Enter Your Local Date & Time:</label>
+                          <input 
+                            type="datetime-local" 
+                            className="converter-input"
+                            value={convState.time}
+                            onChange={(e) => handleTimeChange(country.name, e.target.value)}
+                          />
+                          
+                          {convertedTargetTime && (
+                            <div className="converter-result">
+                              Local time in {country.name} will be:
+                              <span>{convertedTargetTime}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
+                    
                     <button 
                       onClick={() => toggleCountry(country.name)} 
                       className="btn-remove"
