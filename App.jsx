@@ -7,7 +7,6 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [ticker, setTicker] = useState(Date.now());
   
-  // Cache Buster applied: Changed key to 'associateLoc_v2' to force the new 'IN' default
   const [associateLocation, setAssociateLocation] = useState(() => {
     return localStorage.getItem('associateLoc_v2') || 'IN';
   });
@@ -19,31 +18,26 @@ export default function App() {
 
   const [converterState, setConverterState] = useState({});
 
-  // Map the dropdown locations to standard timezones
   const officeTimezones = {
     'IN': 'Asia/Kolkata',
     'US': 'America/New_York',
     'UK': 'Europe/London'
   };
 
-  // Map the dropdown locations to readable labels for the UI
   const officeLabels = {
     'IN': 'India Office',
     'US': 'US Office (EST)',
     'UK': 'UK Office'
   };
 
-  // Save state whenever it changes
   useEffect(() => localStorage.setItem('associateLoc_v2', associateLocation), [associateLocation]);
   useEffect(() => localStorage.setItem('selectedCountries', JSON.stringify(selectedCountries)), [selectedCountries]);
 
-  // Update the current live time every 60 seconds
   useEffect(() => {
     const interval = setInterval(() => setTicker(Date.now()), 60000);
     return () => clearInterval(interval);
   }, []);
 
-  // Process time, status, and relative offset for all countries
   const processedCountries = countries.map(country => {
     const currentAssociateTz = officeTimezones[associateLocation];
     const now = new Date();
@@ -61,6 +55,7 @@ export default function App() {
     const dateAssociate = new Date(now.toLocaleString('en-US', { timeZone: currentAssociateTz }));
     const dateTarget = new Date(now.toLocaleString('en-US', { timeZone: country.timezone }));
     
+    // Calculate the exact minute difference between Target and Associate
     const diffMins = Math.round((dateTarget - dateAssociate) / 60000);
     
     let offsetText = "Same time zone";
@@ -73,7 +68,8 @@ export default function App() {
       offsetText = diffMins > 0 ? `${timeStr.trim()} ahead` : `${timeStr.trim()} behind`;
     }
 
-    return { ...country, localTimeString, callStatus, offsetText };
+    // Return diffMins so we can use it in the reverse calculation later
+    return { ...country, localTimeString, callStatus, offsetText, diffMins };
   });
 
   const filteredForDrawer = processedCountries.filter(c => 
@@ -336,21 +332,25 @@ export default function App() {
                   statusText = "Good to Call";
                 } else if (country.callStatus === 'soon') {
                   cardClass = 'card-soon';
-                  badge,Class = 'badge-soon';
+                  badgeClass = 'badge-soon';
                   statusText = "Soon Available";
                 }
 
                 const convState = converterState[country.name] || { isOpen: false, date: '', time: '' };
-                let convertedTargetTime = null;
+                let convertedAssociateTime = null;
                 
+                // Reverse math logic: Convert target's input time to associate's local time
                 if (convState.date && convState.time) {
                   try {
-                    const dateObj = new Date(`${convState.date}T${convState.time}`);
-                    convertedTargetTime = new Intl.DateTimeFormat('en-US', {
-                      timeZone: country.timezone,
+                    // Treat the input date as a generic absolute value
+                    const inputDate = new Date(`${convState.date}T${convState.time}`);
+                    // Subtract the diffMins to shift the time backwards/forwards to the associate's timezone
+                    const associateDate = new Date(inputDate.getTime() - (country.diffMins * 60000));
+                    
+                    convertedAssociateTime = new Intl.DateTimeFormat('en-US', {
                       weekday: 'short', month: 'short', day: 'numeric',
                       hour: 'numeric', minute: 'numeric', hour12: true
-                    }).format(dateObj);
+                    }).format(associateDate);
                   } catch (e) {
                     // Fail silently
                   }
@@ -381,7 +381,7 @@ export default function App() {
                       {convState.isOpen && (
                         <div className="converter-panel">
                           <div className="converter-panel-header">
-                            <label>Plan a Call</label>
+                            <label>Respondent's Requested Time</label>
                             <button className="btn-close" onClick={() => toggleConverter(country.name)}>&times;</button>
                           </div>
                           
@@ -406,10 +406,11 @@ export default function App() {
                             />
                           </div>
                           
-                          {convertedTargetTime && (
+                          {convertedAssociateTime && (
                             <div className="converter-result">
-                              When it is {convState.time} in the <strong>{officeLabels[associateLocation]}</strong>, local time in {country.name} will be:
-                              <span>{convertedTargetTime}</span>
+                              When it is {convState.time} in {country.name}, it will be:
+                              <span style={{color: 'var(--color-eu)'}}>{convertedAssociateTime}</span>
+                              in the <strong>{officeLabels[associateLocation]}</strong>.
                             </div>
                           )}
                         </div>
