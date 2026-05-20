@@ -1,7 +1,7 @@
 // countryData.js
 
 export const countries = [
-  // === EUROPEAN UNION (27 Countries - GDPR Applies) ===
+  // === EUROPEAN UNION & UK (GDPR Applies) ===
   { name: "Austria", timezone: "Europe/Vienna", isEU: true, region: "Europe" },
   { name: "Belgium", timezone: "Europe/Brussels", isEU: true, region: "Europe" },
   { name: "Bulgaria", timezone: "Europe/Sofia", isEU: true, region: "Europe" },
@@ -29,6 +29,7 @@ export const countries = [
   { name: "Slovenia", timezone: "Europe/Ljubljana", isEU: true, region: "Europe" },
   { name: "Spain", timezone: "Europe/Madrid", isEU: true, region: "Europe" },
   { name: "Sweden", timezone: "Europe/Stockholm", isEU: true, region: "Europe" },
+  { name: "United Kingdom", timezone: "Europe/London", isEU: true, region: "Europe" },
 
   // === EEA COUNTRIES (Non-EU but GDPR Applies) ===
   { name: "Iceland", timezone: "Atlantic/Reykjavik", isEU: true, region: "Europe" },
@@ -187,11 +188,6 @@ export const countries = [
   { name: "Uganda", timezone: "Africa/Kampala", isEU: false, region: "Africa" },
   { name: "Ukraine", timezone: "Europe/Kiev", isEU: false, region: "Europe" },
   { name: "United Arab Emirates", timezone: "Asia/Dubai", isEU: false, region: "Middle East" },
-  { name: "United Kingdom", timezone: "Europe/London", isEU: false, region: "Europe" },
-  { name: "United States (Eastern)", timezone: "America/New_York", isEU: false, region: "North America" },
-  { name: "United States (Central)", timezone: "America/Chicago", isEU: false, region: "North America" },
-  { name: "United States (Mountain)", timezone: "America/Denver", isEU: false, region: "North America" },
-  { name: "United States (Pacific)", timezone: "America/Los_Angeles", isEU: false, region: "North America" },
   { name: "Uruguay", timezone: "America/Montevideo", isEU: false, region: "South America" },
   { name: "Uzbekistan", timezone: "Asia/Tashkent", isEU: false, region: "Asia" },
   { name: "Vanuatu", timezone: "Pacific/Efate", isEU: false, region: "Oceania" },
