@@ -16,7 +16,6 @@ export default function App() {
     return saved ? JSON.parse(saved) : [];
   });
 
-  // --- NEW LOG STATE ---
   const [appointmentLogs, setAppointmentLogs] = useState(() => {
     const saved = localStorage.getItem('appointmentLogs');
     return saved ? JSON.parse(saved) : [];
@@ -125,7 +124,7 @@ export default function App() {
     }));
   };
 
-  const applyPreset = (countryName, daysToAdd, targetHour) => {
+  const applyDatePreset = (countryName, daysToAdd) => {
     const d = new Date();
     d.setDate(d.getDate() + daysToAdd);
     
@@ -134,19 +133,16 @@ export default function App() {
     const dd = String(d.getDate()).padStart(2, '0');
     
     const dateStr = `${yyyy}-${mm}-${dd}`;
-    const timeStr = `${String(targetHour).padStart(2, '0')}:00`;
 
     setConverterState(prev => ({
       ...prev,
       [countryName]: {
         ...prev[countryName],
-        date: dateStr,
-        time: timeStr
+        date: dateStr
       }
     }));
   };
 
-  // --- NEW HANDLER ---
   const handleSaveLog = (countryName, targetTimeDesc, associateTimeDesc) => {
     const newLog = {
       id: Date.now(),
@@ -263,21 +259,23 @@ export default function App() {
         .card-soon::before { background: var(--grad-soon); }
         .card-bad::before { background: var(--grad-bad); }
         
-        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
-        .card-country { font-size: 24px; font-weight: 800; margin: 0 0 6px 0; color: var(--text-main); letter-spacing: -0.03em; }
+        /* New structured card rows */
+        .card-top-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .card-offset { font-size: 14px; font-weight: 600; color: var(--text-muted); margin: 0; opacity: 0.9; }
         
-        .time-container { text-align: right; }
-        .card-time { font-size: 36px; font-weight: 900; margin: 0 0 4px 0; color: var(--text-main); font-variant-numeric: tabular-nums; letter-spacing: -0.04em; line-height: 1; }
-        .card-offset { font-size: 14px; font-weight: 600; color: var(--text-muted); margin: 0; opacity: 0.8; }
+        .card-main-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; }
+        .card-country { font-size: 24px; font-weight: 800; margin: 0; color: var(--text-main); letter-spacing: -0.03em; }
+        .card-time { font-size: 34px; font-weight: 900; margin: 0; color: var(--text-main); font-variant-numeric: tabular-nums; letter-spacing: -0.04em; line-height: 1; }
         
-        .badges { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 24px; }
+        .card-actions-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-top: 16px; border-top: 1px solid var(--border); }
+        
         .badge { padding: 6px 14px; border-radius: 100px; font-size: 12px; font-weight: 700; letter-spacing: 0.03em; display: inline-flex; align-items: center; }
         .badge-eu { background-color: #EFF6FF; color: var(--color-eu); border: 1px solid rgba(59, 130, 246, 0.2); }
         .badge-good { background-color: var(--bg-good); color: #047857; border: 1px solid rgba(16, 185, 129, 0.2); }
         .badge-soon { background-color: var(--bg-soon); color: #B45309; border: 1px solid rgba(245, 158, 11, 0.2); }
         .badge-bad { background-color: var(--bg-bad); color: #475569; border: 1px solid rgba(148, 163, 184, 0.2); }
         
-        .btn-toggle-converter { background-color: #F8FAFC; color: #475569; border: 1px solid var(--border); padding: 6px 14px; border-radius: 100px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; }
+        .btn-toggle-converter { background-color: #F8FAFC; color: #475569; border: 1px solid var(--border); padding: 8px 16px; border-radius: 100px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; }
         .btn-toggle-converter:hover { background-color: #E2E8F0; color: #0F172A; }
         
         .converter-panel { margin-bottom: 24px; padding: 20px; background-color: #F8FAFC; border-radius: 16px; border: 1px solid var(--border); animation: fadeIn 0.3s ease; }
@@ -286,15 +284,17 @@ export default function App() {
         .btn-close { background: none; border: none; font-size: 20px; color: #94A3B8; cursor: pointer; line-height: 1; padding: 0; transition: color 0.2s; }
         .btn-close:hover { color: #0F172A; }
 
-        .preset-container { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-        .preset-btn { background-color: #FFF; border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 12px; font-weight: 600; color: var(--color-eu); cursor: pointer; transition: all 0.2s; flex: 1; text-align: center; }
+        /* Centered Inputs & Presets */
+        .preset-container { display: flex; gap: 8px; margin-bottom: 16px; justify-content: center; }
+        .preset-btn { background-color: #FFF; border: 1px solid var(--border); border-radius: 8px; padding: 6px 16px; font-size: 12px; font-weight: 600; color: var(--color-eu); cursor: pointer; transition: all 0.2s; }
         .preset-btn:hover { background-color: #EFF6FF; border-color: rgba(59, 130, 246, 0.3); }
 
-        .datetime-row { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; flex-wrap: wrap; }
-        .converter-input { flex: 1; min-width: 130px; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border); font-family: inherit; font-size: 14px; font-weight: 500; outline: none; transition: all 0.2s; background-color: #FFF; color: var(--text-main); box-sizing: border-box; }
+        .datetime-column { display: flex; flexDirection: column; align-items: center; gap: 16px; margin-bottom: 20px; }
+        
+        .converter-input { width: 100%; max-width: 200px; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border); font-family: inherit; font-size: 14px; font-weight: 500; outline: none; transition: all 0.2s; background-color: #FFF; color: var(--text-main); box-sizing: border-box; text-align: center; }
         .converter-input:focus { border-color: var(--color-eu); box-shadow: 0 0 0 4px rgba(59,130,246,0.15); }
         
-        .time-picker-container { display: flex; gap: 6px; flex: 1; align-items: center; min-width: 210px; box-sizing: border-box; }
+        .time-picker-container { display: flex; gap: 6px; justify-content: center; box-sizing: border-box; }
         .time-select { padding: 10px 8px; border-radius: 10px; border: 1px solid var(--border); font-family: inherit; font-size: 14px; font-weight: 500; outline: none; transition: all 0.2s; background-color: #FFF; color: var(--text-main); cursor: pointer; appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 8px center; background-size: 12px; padding-right: 24px; }
         .time-select:focus { border-color: var(--color-eu); box-shadow: 0 0 0 4px rgba(59,130,246,0.15); }
         .ampm-toggle { display: flex; background: #F1F5F9; border-radius: 8px; padding: 4px; gap: 4px; }
@@ -307,7 +307,6 @@ export default function App() {
         .btn-remove { width: 100%; padding: 14px; background-color: #FFF; border: 1px solid var(--border); border-radius: 12px; color: var(--text-muted); font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; margin-top: auto; }
         .btn-remove:hover { background-color: #FEF2F2; color: #EF4444; border-color: #FECACA; }
 
-        /* --- NEW UI CLASSES FOR LOG SYSTEM --- */
         .btn-view-logs { position: absolute; top: 24px; right: 56px; background-color: #FFF; border: 1px solid var(--border); padding: 10px 18px; border-radius: 100px; font-size: 14px; font-weight: 700; color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 8px; z-index: 5; box-shadow: var(--shadow-sm); transition: all 0.2s; }
         .btn-view-logs:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); border-color: var(--color-eu); }
         .btn-save-log { margin-top: 12px; width: 100%; padding: 10px; border-radius: 10px; font-size: 13px; font-weight: 700; background-color: #EFF6FF; color: var(--color-eu); border: 1px solid rgba(59, 130, 246, 0.2); cursor: pointer; transition: all 0.2s; }
@@ -369,7 +368,7 @@ export default function App() {
         {/* RIGHT CANVAS */}
         <div className="canvas">
           <button className="btn-view-logs" onClick={() => setIsLogModalOpen(true)}>
-            📋 View Appointment Logs {appointmentLogs.length > 0 && `(${appointmentLogs.length})`}
+            View Logs {appointmentLogs.length > 0 && `(${appointmentLogs.length})`}
           </button>
 
           {selectedCountries.length === 0 ? (
@@ -448,22 +447,24 @@ export default function App() {
                 return (
                   <div key={country.name} className={`card ${cardClass}`}>
                     <div>
-                      <div className="card-header">
-                        <h2 className="card-country">{country.name}</h2>
-                        <div className="time-container">
-                          <p className="card-time">{country.localTimeString}</p>
-                          <p className="card-offset">{country.offsetText}</p>
-                        </div>
+                      {/* NEW CARD LAYOUT */}
+                      <div className="card-top-row">
+                        {country.isEU && <span className="badge badge-eu">🇪🇺 GDPR</span>}
+                        <span className="card-offset">{country.offsetText}</span>
                       </div>
                       
-                      <div className="badges">
-                        {country.isEU && <span className="badge badge-eu">🇪🇺 GDPR</span>}
+                      <div className="card-main-row">
+                        <h2 className="card-country">{country.name}</h2>
+                        <p className="card-time">{country.localTimeString}</p>
+                      </div>
+                      
+                      <div className="card-actions-row">
                         <span className={`badge ${badgeClass}`}>{statusText}</span>
                         <button 
                           onClick={() => toggleConverter(country.name)} 
                           className="btn-toggle-converter"
                         >
-                          ⏱️ Convert Time
+                          Convert Time
                         </button>
                       </div>
 
@@ -475,12 +476,11 @@ export default function App() {
                           </div>
                           
                           <div className="preset-container">
-                            <button className="preset-btn" onClick={() => applyPreset(country.name, 1, 10)}>Tmrw 10 AM</button>
-                            <button className="preset-btn" onClick={() => applyPreset(country.name, 1, 14)}>Tmrw 2 PM</button>
-                            <button className="preset-btn" onClick={() => applyPreset(country.name, 3, 10)}>In 3 Days</button>
+                            <button className="preset-btn" onClick={() => applyDatePreset(country.name, 1)}>Tomorrow</button>
+                            <button className="preset-btn" onClick={() => applyDatePreset(country.name, 2)}>Day After</button>
                           </div>
 
-                          <div className="datetime-row">
+                          <div className="datetime-column">
                             <input 
                               type="date" 
                               className="converter-input"
@@ -498,7 +498,7 @@ export default function App() {
                                   <option key={i + 1} value={i + 1}>{i + 1}</option>
                                 ))}
                               </select>
-                              <span style={{ fontWeight: 'bold', color: 'var(--text-muted)' }}>:</span>
+                              <span style={{ fontWeight: 'bold', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>:</span>
                               <select 
                                 className="time-select" 
                                 value={m} 
@@ -536,7 +536,7 @@ export default function App() {
                                   convertedAssociateTime
                                 )}
                               >
-                                💾 Save Appointment to Log
+                                Save Log
                               </button>
                             </div>
                           )}
@@ -568,7 +568,6 @@ export default function App() {
               <div className="modal-body">
                 {appointmentLogs.length === 0 ? (
                   <div style={{textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)'}}>
-                    <div style={{fontSize: '32px', marginBottom: '12px'}}>📋</div>
                     <h3 style={{margin: '0 0 8px 0', color: 'var(--text-main)'}}>No Logs Yet</h3>
                     <p style={{margin: 0, fontSize: '14px'}}>Use the time converter to save upcoming appointments.</p>
                   </div>
