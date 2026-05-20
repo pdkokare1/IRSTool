@@ -187,7 +187,6 @@ export const countries = [
   { name: "Tuvalu", timezone: "Pacific/Funafuti", isEU: false, region: "Oceania" },
   { name: "Uganda", timezone: "Africa/Kampala", isEU: false, region: "Africa" },
   { name: "Ukraine", timezone: "Europe/Kiev", isEU: false, region: "Europe" },
-  { name: "United Arab Emirates", timezone: "Asia/Dubai", isEU: false, region: "Middle East" },
   { name: "Uruguay", timezone: "America/Montevideo", isEU: false, region: "South America" },
   { name: "Uzbekistan", timezone: "Asia/Tashkent", isEU: false, region: "Asia" },
   { name: "Vanuatu", timezone: "Pacific/Efate", isEU: false, region: "Oceania" },
