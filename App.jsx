@@ -27,6 +27,7 @@ const getTzOffsetMins = (dateObj, timeZone) => {
 
 export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [regionFilter, setRegionFilter] = useState("All"); // NEW REGION FILTER STATE
   const [ticker, setTicker] = useState(Date.now());
   
   const [associateLocation, setAssociateLocation] = useState(() => {
@@ -93,6 +94,7 @@ export default function App() {
       const hourOptions = { timeZone: country.timezone, hour: 'numeric', hour12: false };
       localHour = parseInt(new Intl.DateTimeFormat('en-US', hourOptions).format(now), 10);
 
+      // Dynamic calculation based on user settings
       if (localHour >= callWindowStart && localHour < callWindowEnd) {
         callStatus = 'available';
       } else if (localHour >= (callWindowStart - 2) && localHour < callWindowStart) {
@@ -120,9 +122,19 @@ export default function App() {
     return { ...country, localTimeString, callStatus, offsetText, diffMins };
   });
 
-  const filteredForDrawer = processedCountries.filter(c => 
-    c.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // UPDATED FILTER LOGIC: Now checks both Search Query AND Region Match
+  const filteredForDrawer = processedCountries.filter(c => {
+    const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    let matchesRegion = true;
+    if (regionFilter === "EU Only") {
+      matchesRegion = c.isEU;
+    } else if (regionFilter !== "All") {
+      matchesRegion = c.region === regionFilter;
+    }
+
+    return matchesSearch && matchesRegion;
+  });
 
   const availableList = filteredForDrawer.filter(c => c.callStatus === 'available');
   const soonList = filteredForDrawer.filter(c => c.callStatus === 'soon');
@@ -255,11 +267,11 @@ export default function App() {
         .drawer-header { padding: 28px 24px 20px; border-bottom: 1px solid var(--border); }
         .drawer-title { margin: 0 0 20px 0; font-size: 22px; font-weight: 800; color: var(--text-main); letter-spacing: -0.03em; }
         
-        .location-dropdown { width: 100%; padding: 12px 16px; font-size: 14px; font-weight: 600; color: var(--text-main); background-color: #F1F5F9; border: 1px solid transparent; border-radius: 10px; margin-bottom: 20px; cursor: pointer; outline: none; appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 16px center; background-size: 16px; transition: all 0.2s; }
+        .location-dropdown { width: 100%; padding: 12px 16px; font-size: 14px; font-weight: 600; color: var(--text-main); background-color: #F1F5F9; border: 1px solid transparent; border-radius: 10px; margin-bottom: 12px; cursor: pointer; outline: none; appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 16px center; background-size: 16px; transition: all 0.2s; }
         .location-dropdown:hover { background-color: #E2E8F0; }
         .location-dropdown:focus { border-color: var(--color-eu); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15); background-color: #FFF; }
 
-        .search-input { width: 100%; padding: 14px 16px; font-size: 14px; border-radius: 10px; border: 1px solid var(--border); box-sizing: border-box; outline: none; transition: all 0.2s; background-color: #F8FAFC; color: var(--text-main); }
+        .search-input { width: 100%; padding: 14px 16px; font-size: 14px; border-radius: 10px; border: 1px solid var(--border); box-sizing: border-box; outline: none; transition: all 0.2s; background-color: #F8FAFC; color: var(--text-main); margin-bottom: 12px; }
         .search-input:focus { border-color: var(--color-eu); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15); background-color: #FFF; }
         .search-input::placeholder { color: #94A3B8; }
         
@@ -347,7 +359,6 @@ export default function App() {
         .converter-result { font-size: 14px; font-weight: 600; color: var(--text-muted); background: #FFF; padding: 16px; border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); border-left: 4px solid var(--color-eu); line-height: 1.5; }
         .converter-result span { color: var(--text-main); font-weight: 800; display: block; margin-top: 6px; font-size: 18px; letter-spacing: -0.02em; }
         
-        /* NEW DST Warning Style */
         .dst-warning { font-size: 13px; color: #B45309; background: #FFFBEB; padding: 10px 14px; border-radius: 8px; margin-top: 12px; border: 1px solid rgba(245, 158, 11, 0.3); font-weight: 600; display: flex; align-items: flex-start; gap: 8px; line-height: 1.4; animation: fadeIn 0.3s ease; }
         
         .btn-remove { width: 100%; padding: 14px; background-color: #FFF; border: 1px solid var(--border); border-radius: 12px; color: var(--text-muted); font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; margin-top: auto; }
@@ -398,6 +409,25 @@ export default function App() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="search-input"
             />
+            
+            {/* NEW REGIONAL FILTER DROPDOWN */}
+            <select 
+              className="location-dropdown"
+              style={{ marginTop: '0', backgroundColor: '#FFF', border: '1px solid var(--border)' }}
+              value={regionFilter}
+              onChange={(e) => setRegionFilter(e.target.value)}
+            >
+              <option value="All">🌍 All Regions</option>
+              <option value="EU Only">🇪🇺 European Union (GDPR)</option>
+              <option value="Europe">Europe (Non-EU & EU)</option>
+              <option value="North America">North America</option>
+              <option value="South America">South America</option>
+              <option value="Asia">Asia</option>
+              <option value="Southeast Asia">Southeast Asia</option>
+              <option value="Middle East">Middle East & Gulf</option>
+              <option value="Africa">Africa</option>
+              <option value="Oceania">Oceania & Pacific</option>
+            </select>
           </div>
           
           <div className="drawer-scroll">
@@ -503,28 +533,22 @@ export default function App() {
 
                 if (convState.date && convState.time) {
                   try {
-                    // Start by creating a UTC guess of the target time
                     const guessUtc = new Date(`${convState.date}T${convState.time}Z`);
                     
-                    // Find out the exact offset of the target country AT THAT SPECIFIC MOMENT
                     const targetOffsetFuture = getTzOffsetMins(guessUtc, country.timezone);
                     let exactUtc = new Date(guessUtc.getTime() - targetOffsetFuture * 60000);
                     
-                    // Double check exactly on boundaries
                     const targetOffsetFinal = getTzOffsetMins(exactUtc, country.timezone);
                     exactUtc = new Date(guessUtc.getTime() - targetOffsetFinal * 60000);
 
-                    // Determine what the associate's offset will be on that same date
                     const currentAssociateTz = officeTimezones[associateLocation];
                     const associateOffsetFuture = getTzOffsetMins(exactUtc, currentAssociateTz);
                     
-                    // Check for DST shifts between 'Now' and 'Future'
                     const futureDiffMins = targetOffsetFinal - associateOffsetFuture;
                     if (futureDiffMins !== country.diffMins) {
                       hasDstWarning = true;
                     }
 
-                    // Manually build DD/MM/YYYY for Associate Output
                     const parts = new Intl.DateTimeFormat('en-US', { 
                       timeZone: currentAssociateTz, year: 'numeric', month: 'numeric', day: 'numeric', 
                       hour: 'numeric', minute: 'numeric', hour12: true 
