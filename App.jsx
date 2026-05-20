@@ -22,7 +22,6 @@ export default function App() {
   });
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
 
-  // --- NEW CALLING WINDOW SETTINGS ---
   const [callWindowStart, setCallWindowStart] = useState(() => {
     return parseInt(localStorage.getItem('callWindowStart')) || 9;
   });
@@ -245,7 +244,6 @@ export default function App() {
         
         .drawer-scroll { flex: 1; overflow-y: auto; padding: 20px 24px; }
         
-        /* Settings Section inside Drawer */
         .drawer-settings { padding: 20px 24px; background: #F8FAFC; border-top: 1px solid var(--border); }
         .settings-title { font-size: 12px; text-transform: uppercase; color: var(--text-muted); font-weight: 800; margin: 0 0 12px 0; letter-spacing: 0.05em; }
         .settings-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
@@ -311,11 +309,24 @@ export default function App() {
 
         .datetime-column { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 20px; }
         
-        /* GHOST INPUT UI TRICK */
+        /* GHOST CALENDAR CSS FIXES */
         .ghost-date-wrapper { position: relative; width: 100%; max-width: 180px; margin: 0 auto; display: inline-block; }
         .ghost-date-display { padding: 10px 14px; background: #FFF; border: 1px solid var(--border); border-radius: 10px; font-size: 14px; font-weight: 600; color: var(--text-main); text-align: center; cursor: pointer; transition: all 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
         .ghost-date-wrapper:hover .ghost-date-display { border-color: var(--color-eu); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+        
         .ghost-date-input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; box-sizing: border-box; }
+        
+        /* Forces the native calendar trigger area to stretch entirely across our custom box */
+        .ghost-date-input::-webkit-calendar-picker-indicator {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          margin: 0;
+          padding: 0;
+          cursor: pointer;
+        }
         
         .time-picker-container { display: flex; gap: 6px; justify-content: center; box-sizing: border-box; align-items: center; }
         .time-select { padding: 10px 8px; border-radius: 10px; border: 1px solid var(--border); font-family: inherit; font-size: 14px; font-weight: 500; outline: none; transition: all 0.2s; background-color: #FFF; color: var(--text-main); cursor: pointer; appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 8px center; background-size: 12px; padding-right: 24px; }
@@ -387,7 +398,6 @@ export default function App() {
             )}
           </div>
 
-          {/* NEW SETTINGS SECTION */}
           <div className="drawer-settings">
             <h3 className="settings-title">Target Business Hours</h3>
             <div className="settings-row">
@@ -535,8 +545,18 @@ export default function App() {
 
                           <div className="datetime-column">
                             
-                            {/* GHOST CALENDAR TRICK */}
-                            <div className="ghost-date-wrapper">
+                            {/* UPDATED GHOST CALENDAR TRICK */}
+                            <div 
+                              className="ghost-date-wrapper"
+                              onClick={(e) => {
+                                try {
+                                  // Programmatically force the calendar to open
+                                  e.currentTarget.querySelector('input').showPicker();
+                                } catch(err) {
+                                  // Failsafe catch for highly restricted browsers
+                                }
+                              }}
+                            >
                               <div className="ghost-date-display">
                                 📅 {convState.date ? targetDateStr : "Select Date"}
                               </div>
@@ -548,7 +568,6 @@ export default function App() {
                               />
                             </div>
 
-                            {/* Centered Time Picker */}
                             <div className="time-picker-container">
                               <select 
                                 className="time-select" 
