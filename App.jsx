@@ -3,6 +3,28 @@
 import React, { useState, useEffect } from 'react';
 import { countries } from './countryData';
 
+// Helper to reliably find a timezone's UTC offset (in minutes) at any specific date/time
+const getTzOffsetMins = (dateObj, timeZone) => {
+  try {
+    const fmt = new Intl.DateTimeFormat('en-US', {
+      timeZone, year: 'numeric', month: 'numeric', day: 'numeric',
+      hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false
+    });
+    const parts = fmt.formatToParts(dateObj);
+    const p = {};
+    parts.forEach(part => p[part.type] = part.value);
+    
+    // Handle 24:00 edge case from some browser implementations
+    const hr = p.hour === '24' ? '00' : p.hour;
+    const isoString = `${p.year}-${p.month.padStart(2, '0')}-${p.day.padStart(2, '0')}T${hr.padStart(2, '0')}:${p.minute.padStart(2, '0')}:${p.second.padStart(2, '0')}Z`;
+    
+    const tzDate = new Date(isoString);
+    return Math.round((tzDate - dateObj) / 60000);
+  } catch (e) {
+    return 0; // Fallback
+  }
+};
+
 export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [ticker, setTicker] = useState(Date.now());
@@ -71,17 +93,16 @@ export default function App() {
       const hourOptions = { timeZone: country.timezone, hour: 'numeric', hour12: false };
       localHour = parseInt(new Intl.DateTimeFormat('en-US', hourOptions).format(now), 10);
 
-      // Dynamic calculation based on user settings
       if (localHour >= callWindowStart && localHour < callWindowEnd) {
         callStatus = 'available';
       } else if (localHour >= (callWindowStart - 2) && localHour < callWindowStart) {
         callStatus = 'soon';
       }
 
-      const dateAssociate = new Date(now.toLocaleString('en-US', { timeZone: currentAssociateTz }));
-      const dateTarget = new Date(now.toLocaleString('en-US', { timeZone: country.timezone }));
-      
-      diffMins = Math.round((dateTarget - dateAssociate) / 60000);
+      // Calculate the true offset difference using the exact current time
+      const associateOffsetNow = getTzOffsetMins(now, currentAssociateTz);
+      const targetOffsetNow = getTzOffsetMins(now, country.timezone);
+      diffMins = targetOffsetNow - associateOffsetNow;
       
       offsetText = "Same time zone";
       if (diffMins !== 0) {
@@ -309,24 +330,12 @@ export default function App() {
 
         .datetime-column { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 20px; }
         
-        /* GHOST CALENDAR CSS FIXES */
         .ghost-date-wrapper { position: relative; width: 100%; max-width: 180px; margin: 0 auto; display: inline-block; }
         .ghost-date-display { padding: 10px 14px; background: #FFF; border: 1px solid var(--border); border-radius: 10px; font-size: 14px; font-weight: 600; color: var(--text-main); text-align: center; cursor: pointer; transition: all 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
         .ghost-date-wrapper:hover .ghost-date-display { border-color: var(--color-eu); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
         
         .ghost-date-input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; box-sizing: border-box; }
-        
-        /* Forces the native calendar trigger area to stretch entirely across our custom box */
-        .ghost-date-input::-webkit-calendar-picker-indicator {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          margin: 0;
-          padding: 0;
-          cursor: pointer;
-        }
+        .ghost-date-input::-webkit-calendar-picker-indicator { position: absolute; top: 0; left: 0; width: 100%; height: 100%; margin: 0; padding: 0; cursor: pointer; }
         
         .time-picker-container { display: flex; gap: 6px; justify-content: center; box-sizing: border-box; align-items: center; }
         .time-select { padding: 10px 8px; border-radius: 10px; border: 1px solid var(--border); font-family: inherit; font-size: 14px; font-weight: 500; outline: none; transition: all 0.2s; background-color: #FFF; color: var(--text-main); cursor: pointer; appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 8px center; background-size: 12px; padding-right: 24px; }
@@ -337,6 +346,9 @@ export default function App() {
 
         .converter-result { font-size: 14px; font-weight: 600; color: var(--text-muted); background: #FFF; padding: 16px; border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); border-left: 4px solid var(--color-eu); line-height: 1.5; }
         .converter-result span { color: var(--text-main); font-weight: 800; display: block; margin-top: 6px; font-size: 18px; letter-spacing: -0.02em; }
+        
+        /* NEW DST Warning Style */
+        .dst-warning { font-size: 13px; color: #B45309; background: #FFFBEB; padding: 10px 14px; border-radius: 8px; margin-top: 12px; border: 1px solid rgba(245, 158, 11, 0.3); font-weight: 600; display: flex; align-items: flex-start; gap: 8px; line-height: 1.4; animation: fadeIn 0.3s ease; }
         
         .btn-remove { width: 100%; padding: 14px; background-color: #FFF; border: 1px solid var(--border); border-radius: 12px; color: var(--text-muted); font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; margin-top: auto; }
         .btn-remove:hover { background-color: #FEF2F2; color: #EF4444; border-color: #FECACA; }
@@ -457,6 +469,7 @@ export default function App() {
 
                 const convState = converterState[country.name] || { isOpen: false, date: '', time: '' };
                 let convertedAssociateTime = null;
+                let hasDstWarning = false;
                 
                 const handleTimePartChange = (part, value) => {
                   const currentTime = convState.time || '09:00';
@@ -490,19 +503,43 @@ export default function App() {
 
                 if (convState.date && convState.time) {
                   try {
-                    const inputDate = new Date(`${convState.date}T${convState.time}`);
-                    const associateDate = new Date(inputDate.getTime() - (country.diffMins * 60000));
+                    // Start by creating a UTC guess of the target time
+                    const guessUtc = new Date(`${convState.date}T${convState.time}Z`);
                     
-                    const dd = String(associateDate.getDate()).padStart(2, '0');
-                    const mm = String(associateDate.getMonth() + 1).padStart(2, '0');
-                    const yyyy = associateDate.getFullYear();
-                    const timeStr = new Intl.DateTimeFormat('en-US', {
-                      hour: 'numeric', minute: 'numeric', hour12: true
-                    }).format(associateDate);
+                    // Find out the exact offset of the target country AT THAT SPECIFIC MOMENT
+                    const targetOffsetFuture = getTzOffsetMins(guessUtc, country.timezone);
+                    let exactUtc = new Date(guessUtc.getTime() - targetOffsetFuture * 60000);
+                    
+                    // Double check exactly on boundaries
+                    const targetOffsetFinal = getTzOffsetMins(exactUtc, country.timezone);
+                    exactUtc = new Date(guessUtc.getTime() - targetOffsetFinal * 60000);
 
-                    convertedAssociateTime = `${dd}/${mm}/${yyyy}, ${timeStr}`;
+                    // Determine what the associate's offset will be on that same date
+                    const currentAssociateTz = officeTimezones[associateLocation];
+                    const associateOffsetFuture = getTzOffsetMins(exactUtc, currentAssociateTz);
+                    
+                    // Check for DST shifts between 'Now' and 'Future'
+                    const futureDiffMins = targetOffsetFinal - associateOffsetFuture;
+                    if (futureDiffMins !== country.diffMins) {
+                      hasDstWarning = true;
+                    }
+
+                    // Manually build DD/MM/YYYY for Associate Output
+                    const parts = new Intl.DateTimeFormat('en-US', { 
+                      timeZone: currentAssociateTz, year: 'numeric', month: 'numeric', day: 'numeric', 
+                      hour: 'numeric', minute: 'numeric', hour12: true 
+                    }).formatToParts(exactUtc);
+                    
+                    const ddAs = parts.find(p => p.type === 'day').value.padStart(2, '0');
+                    const mmAs = parts.find(p => p.type === 'month').value.padStart(2, '0');
+                    const yyyyAs = parts.find(p => p.type === 'year').value;
+                    const hrAs = parts.find(p => p.type === 'hour').value;
+                    const mnAs = parts.find(p => p.type === 'minute').value;
+                    const apAs = parts.find(p => p.type === 'dayPeriod').value;
+
+                    convertedAssociateTime = `${ddAs}/${mmAs}/${yyyyAs}, ${hrAs}:${mnAs} ${apAs}`;
                   } catch (e) {
-                    // Fail silently
+                    console.error("Time Conversion Error:", e);
                   }
                 }
 
@@ -544,17 +581,10 @@ export default function App() {
                           </div>
 
                           <div className="datetime-column">
-                            
-                            {/* UPDATED GHOST CALENDAR TRICK */}
                             <div 
                               className="ghost-date-wrapper"
                               onClick={(e) => {
-                                try {
-                                  // Programmatically force the calendar to open
-                                  e.currentTarget.querySelector('input').showPicker();
-                                } catch(err) {
-                                  // Failsafe catch for highly restricted browsers
-                                }
+                                try { e.currentTarget.querySelector('input').showPicker(); } catch(err) {}
                               }}
                             >
                               <div className="ghost-date-display">
@@ -608,6 +638,14 @@ export default function App() {
                                 <span style={{color: 'var(--color-eu)'}}>{convertedAssociateTime}</span>
                                 in <strong>{officeLabels[associateLocation]}</strong>.
                               </div>
+                              
+                              {hasDstWarning && (
+                                <div className="dst-warning">
+                                  <span>⚠️</span> 
+                                  <span><strong>Daylight Saving Shift:</strong> The time difference between your location and {country.name} will change by this date. The converted time shown above is correct and has safely accounted for this shift.</span>
+                                </div>
+                              )}
+
                               <button 
                                 className="btn-save-log"
                                 onClick={() => handleSaveLog(
