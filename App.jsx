@@ -1,6 +1,6 @@
 // App.jsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { countries } from './countryData';
 
 // Helper to reliably find a timezone's UTC offset (in minutes) at any specific date/time
@@ -77,70 +77,77 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
-  const processedCountries = countries.map(country => {
-    const currentAssociateTz = officeTimezones[associateLocation];
-    const now = new Date();
+  // Optimized via useMemo to only evaluate when the 60s ticker changes or office origin selection switches
+  const processedCountries = useMemo(() => {
+    return countries.map(country => {
+      const currentAssociateTz = officeTimezones[associateLocation];
+      const now = new Date();
 
-    let localTimeString = "Error";
-    let localHour = 0;
-    let callStatus = 'unavailable';
-    let offsetText = "Unknown offset";
-    let diffMins = 0;
+      let localTimeString = "Error";
+      let localHour = 0;
+      let callStatus = 'unavailable';
+      let offsetText = "Unknown offset";
+      let diffMins = 0;
 
-    try {
-      const options = { timeZone: country.timezone, hour: 'numeric', minute: 'numeric', hour12: true };
-      localTimeString = new Intl.DateTimeFormat('en-US', options).format(now);
+      try {
+        const options = { timeZone: country.timezone, hour: 'numeric', minute: 'numeric', hour12: true };
+        localTimeString = new Intl.DateTimeFormat('en-US', options).format(now);
 
-      const hourOptions = { timeZone: country.timezone, hour: 'numeric', hour12: false };
-      localHour = parseInt(new Intl.DateTimeFormat('en-US', hourOptions).format(now), 10);
+        const hourOptions = { timeZone: country.timezone, hour: 'numeric', hour12: false };
+        localHour = parseInt(new Intl.DateTimeFormat('en-US', hourOptions).format(now), 10);
 
-      // Dynamic calculation based on user settings
-      if (localHour >= callWindowStart && localHour < callWindowEnd) {
-        callStatus = 'available';
-      } else if (localHour >= (callWindowStart - 2) && localHour < callWindowStart) {
-        callStatus = 'soon';
+        // Dynamic calculation based on user settings
+        if (localHour >= callWindowStart && localHour < callWindowEnd) {
+          callStatus = 'available';
+        } else if (localHour >= (callWindowStart - 2) && localHour < callWindowStart) {
+          callStatus = 'soon';
+        }
+
+        // Calculate the true offset difference using the exact current time
+        const associateOffsetNow = getTzOffsetMins(now, currentAssociateTz);
+        const targetOffsetNow = getTzOffsetMins(now, country.timezone);
+        diffMins = targetOffsetNow - associateOffsetNow;
+        
+        offsetText = "Same time zone";
+        if (diffMins !== 0) {
+          const hrs = Math.floor(Math.abs(diffMins) / 60);
+          const mins = Math.abs(diffMins) % 60;
+          let timeStr = '';
+          if (hrs > 0) timeStr += `${hrs}h`;
+          if (mins > 0) timeStr += ` ${mins}m`;
+          offsetText = diffMins > 0 ? `${timeStr.trim()} ahead` : `${timeStr.trim()} behind`;
+        }
+      } catch (err) {
+        console.warn(`Timezone validation failed for ${country.name}`);
       }
 
-      // Calculate the true offset difference using the exact current time
-      const associateOffsetNow = getTzOffsetMins(now, currentAssociateTz);
-      const targetOffsetNow = getTzOffsetMins(now, country.timezone);
-      diffMins = targetOffsetNow - associateOffsetNow;
+      return { ...country, localTimeString, callStatus, offsetText, diffMins };
+    });
+  }, [ticker, associateLocation, callWindowStart, callWindowEnd]);
+
+  // Optimized Search Filter matching logic
+  const filteredForDrawer = useMemo(() => {
+    return processedCountries.filter(c => {
+      const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase());
       
-      offsetText = "Same time zone";
-      if (diffMins !== 0) {
-        const hrs = Math.floor(Math.abs(diffMins) / 60);
-        const mins = Math.abs(diffMins) % 60;
-        let timeStr = '';
-        if (hrs > 0) timeStr += `${hrs}h`;
-        if (mins > 0) timeStr += ` ${mins}m`;
-        offsetText = diffMins > 0 ? `${timeStr.trim()} ahead` : `${timeStr.trim()} behind`;
+      let matchesRegion = true;
+      if (regionFilter === "EU Only") {
+        matchesRegion = c.isEU;
+      } else if (regionFilter !== "All") {
+        matchesRegion = c.region === regionFilter;
       }
-    } catch (err) {
-      console.warn(`Timezone validation failed for ${country.name}`);
-    }
 
-    return { ...country, localTimeString, callStatus, offsetText, diffMins };
-  });
+      return matchesSearch && matchesRegion;
+    });
+  }, [processedCountries, searchQuery, regionFilter]);
 
-  // UPDATED FILTER LOGIC: Now checks both Search Query AND Region Match
-  const filteredForDrawer = processedCountries.filter(c => {
-    const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    let matchesRegion = true;
-    if (regionFilter === "EU Only") {
-      matchesRegion = c.isEU;
-    } else if (regionFilter !== "All") {
-      matchesRegion = c.region === regionFilter;
-    }
+  const availableList = useMemo(() => filteredForDrawer.filter(c => c.callStatus === 'available'), [filteredForDrawer]);
+  const soonList = useMemo(() => filteredForDrawer.filter(c => c.callStatus === 'soon'), [filteredForDrawer]);
+  const unavailableList = useMemo(() => filteredForDrawer.filter(c => c.callStatus === 'unavailable'), [filteredForDrawer]);
 
-    return matchesSearch && matchesRegion;
-  });
-
-  const availableList = filteredForDrawer.filter(c => c.callStatus === 'available');
-  const soonList = filteredForDrawer.filter(c => c.callStatus === 'soon');
-  const unavailableList = filteredForDrawer.filter(c => c.callStatus === 'unavailable');
-
-  const activeTiles = processedCountries.filter(c => selectedCountries.includes(c.name));
+  const activeTiles = useMemo(() => {
+    return processedCountries.filter(c => selectedCountries.includes(c.name));
+  }, [processedCountries, selectedCountries]);
 
   const toggleCountry = (countryName) => {
     if (selectedCountries.includes(countryName)) {
@@ -531,6 +538,7 @@ export default function App() {
                   ? new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: 'numeric', hour12: true }).format(new Date(`2000-01-01T${convState.time}`)) 
                   : '';
 
+                // Safeguarded future time conversion with try/catch to maintain canvas resilience
                 if (convState.date && convState.time) {
                   try {
                     const guessUtc = new Date(`${convState.date}T${convState.time}Z`);
