@@ -16,6 +16,13 @@ export default function App() {
     return saved ? JSON.parse(saved) : [];
   });
 
+  // --- NEW LOG STATE ---
+  const [appointmentLogs, setAppointmentLogs] = useState(() => {
+    const saved = localStorage.getItem('appointmentLogs');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [isLogModalOpen, setIsLogModalOpen] = useState(false);
+
   const [converterState, setConverterState] = useState({});
 
   const officeTimezones = {
@@ -32,6 +39,7 @@ export default function App() {
 
   useEffect(() => localStorage.setItem('associateLoc_v2', associateLocation), [associateLocation]);
   useEffect(() => localStorage.setItem('selectedCountries', JSON.stringify(selectedCountries)), [selectedCountries]);
+  useEffect(() => localStorage.setItem('appointmentLogs', JSON.stringify(appointmentLogs)), [appointmentLogs]);
 
   useEffect(() => {
     const interval = setInterval(() => setTicker(Date.now()), 60000);
@@ -48,7 +56,6 @@ export default function App() {
     let offsetText = "Unknown offset";
     let diffMins = 0;
 
-    // Wrapped in a try/catch so one bad timezone never crashes the site again
     try {
       const options = { timeZone: country.timezone, hour: 'numeric', minute: 'numeric', hour12: true };
       localTimeString = new Intl.DateTimeFormat('en-US', options).format(now);
@@ -139,6 +146,19 @@ export default function App() {
     }));
   };
 
+  // --- NEW HANDLER ---
+  const handleSaveLog = (countryName, targetTimeDesc, associateTimeDesc) => {
+    const newLog = {
+      id: Date.now(),
+      countryName,
+      targetTimeDesc,
+      associateTimeDesc,
+      timestamp: new Date().toLocaleString()
+    };
+    setAppointmentLogs(prev => [newLog, ...prev]);
+    alert("Appointment successfully saved to log!");
+  };
+
   const DrawerList = ({ title, items, dotClass }) => {
     if (items.length === 0) return null;
     return (
@@ -199,7 +219,7 @@ export default function App() {
 
         body { margin: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg-gradient); color: var(--text-main); -webkit-font-smoothing: antialiased; }
         
-        .layout { display: flex; height: 100vh; overflow: hidden; }
+        .layout { display: flex; height: 100vh; overflow: hidden; position: relative; }
         
         .drawer { width: 360px; min-width: 360px; background-color: var(--bg-drawer); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 10; box-shadow: 4px 0 24px rgba(15, 23, 42, 0.03); }
         .drawer-header { padding: 28px 24px 20px; border-bottom: 1px solid var(--border); }
@@ -230,7 +250,7 @@ export default function App() {
         .selected .country-name { color: #065F46; }
         .time-preview { font-size: 13px; color: var(--text-muted); font-weight: 600; font-variant-numeric: tabular-nums; }
         
-        .canvas { flex: 1; padding: 56px; overflow-y: auto; }
+        .canvas { flex: 1; padding: 80px 56px 56px; overflow-y: auto; position: relative; }
         .canvas-empty { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); text-align: center; animation: fadeIn 0.5s ease-in-out; }
         .canvas-empty h2 { font-size: 28px; font-weight: 800; color: var(--text-main); margin-bottom: 12px; letter-spacing: -0.03em; }
         .canvas-empty p { font-size: 16px; max-width: 420px; line-height: 1.6; color: #64748B; }
@@ -287,6 +307,25 @@ export default function App() {
         .btn-remove { width: 100%; padding: 14px; background-color: #FFF; border: 1px solid var(--border); border-radius: 12px; color: var(--text-muted); font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; margin-top: auto; }
         .btn-remove:hover { background-color: #FEF2F2; color: #EF4444; border-color: #FECACA; }
 
+        /* --- NEW UI CLASSES FOR LOG SYSTEM --- */
+        .btn-view-logs { position: absolute; top: 24px; right: 56px; background-color: #FFF; border: 1px solid var(--border); padding: 10px 18px; border-radius: 100px; font-size: 14px; font-weight: 700; color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 8px; z-index: 5; box-shadow: var(--shadow-sm); transition: all 0.2s; }
+        .btn-view-logs:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); border-color: var(--color-eu); }
+        .btn-save-log { margin-top: 12px; width: 100%; padding: 10px; border-radius: 10px; font-size: 13px; font-weight: 700; background-color: #EFF6FF; color: var(--color-eu); border: 1px solid rgba(59, 130, 246, 0.2); cursor: pointer; transition: all 0.2s; }
+        .btn-save-log:hover { background-color: var(--color-eu); color: #FFF; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,23,42,0.4); display: flex; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(4px); animation: fadeIn 0.2s ease; }
+        .modal-content { background: #FFF; width: 90%; max-width: 500px; max-height: 80vh; border-radius: 20px; box-shadow: var(--shadow-hover); display: flex; flex-direction: column; overflow: hidden; animation: slideUp 0.3s ease; }
+        .modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h2 { margin: 0; font-size: 18px; font-weight: 800; color: var(--text-main); }
+        .modal-body { padding: 24px; overflow-y: auto; flex: 1; background: #F8FAFC; }
+        
+        .log-card { background: #FFF; border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow-sm); }
+        .log-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+        .log-timestamp { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+        .log-delete-btn { background: none; border: none; font-size: 12px; font-weight: 700; color: #EF4444; cursor: pointer; padding: 0; opacity: 0.7; transition: opacity 0.2s; }
+        .log-delete-btn:hover { opacity: 1; }
+        .log-details { font-size: 14px; line-height: 1.6; color: var(--text-main); }
+        
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
       `}</style>
@@ -329,6 +368,10 @@ export default function App() {
 
         {/* RIGHT CANVAS */}
         <div className="canvas">
+          <button className="btn-view-logs" onClick={() => setIsLogModalOpen(true)}>
+            📋 View Appointment Logs {appointmentLogs.length > 0 && `(${appointmentLogs.length})`}
+          </button>
+
           {selectedCountries.length === 0 ? (
             <div className="canvas-empty">
               <h2>Your Workspace is Empty</h2>
@@ -374,12 +417,15 @@ export default function App() {
                 const isPM = parseInt(h24, 10) >= 12;
                 const h12 = parseInt(h24, 10) % 12 || 12;
                 
-                // Format the target date string for the prompt
                 let targetDateStr = '';
                 if (convState.date) {
                   const [y, mmTarget, d] = convState.date.split('-');
                   targetDateStr = `${d}/${mmTarget}/${y}`;
                 }
+
+                const targetFormattedTime = convState.time 
+                  ? new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: 'numeric', hour12: true }).format(new Date(`2000-01-01T${convState.time}`)) 
+                  : '';
 
                 if (convState.date && convState.time) {
                   try {
@@ -476,10 +522,22 @@ export default function App() {
                           </div>
                           
                           {convertedAssociateTime && (
-                            <div className="converter-result">
-                              When it is {convState.time && new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: 'numeric', hour12: true }).format(new Date(`2000-01-01T${convState.time}`))} {convState.date && `on ${targetDateStr}`} in {country.name}, it will be:
-                              <span style={{color: 'var(--color-eu)'}}>{convertedAssociateTime}</span>
-                              in <strong>{officeLabels[associateLocation]}</strong>.
+                            <div style={{marginTop: '16px'}}>
+                              <div className="converter-result">
+                                When it is {targetFormattedTime} {convState.date && `on ${targetDateStr}`} in {country.name}, it will be:
+                                <span style={{color: 'var(--color-eu)'}}>{convertedAssociateTime}</span>
+                                in <strong>{officeLabels[associateLocation]}</strong>.
+                              </div>
+                              <button 
+                                className="btn-save-log"
+                                onClick={() => handleSaveLog(
+                                  country.name,
+                                  `${targetFormattedTime} ${convState.date ? `on ${targetDateStr}` : ''}`,
+                                  convertedAssociateTime
+                                )}
+                              >
+                                💾 Save Appointment to Log
+                              </button>
                             </div>
                           )}
                         </div>
@@ -498,6 +556,45 @@ export default function App() {
             </div>
           )}
         </div>
+
+        {/* LOG MODAL OVERLAY */}
+        {isLogModalOpen && (
+          <div className="modal-overlay" onClick={() => setIsLogModalOpen(false)}>
+            <div className="modal-content" onClick={e => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2>Appointment Logs</h2>
+                <button className="btn-close" onClick={() => setIsLogModalOpen(false)}>&times;</button>
+              </div>
+              <div className="modal-body">
+                {appointmentLogs.length === 0 ? (
+                  <div style={{textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)'}}>
+                    <div style={{fontSize: '32px', marginBottom: '12px'}}>📋</div>
+                    <h3 style={{margin: '0 0 8px 0', color: 'var(--text-main)'}}>No Logs Yet</h3>
+                    <p style={{margin: 0, fontSize: '14px'}}>Use the time converter to save upcoming appointments.</p>
+                  </div>
+                ) : (
+                  appointmentLogs.map(log => (
+                    <div key={log.id} className="log-card">
+                      <div className="log-card-header">
+                        <span className="log-timestamp">Saved: {log.timestamp}</span>
+                        <button 
+                          className="log-delete-btn"
+                          onClick={() => setAppointmentLogs(prev => prev.filter(l => l.id !== log.id))}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                      <div className="log-details">
+                        <strong>Target ({log.countryName}):</strong> {log.targetTimeDesc} <br />
+                        <strong style={{display: 'inline-block', marginTop: '6px'}}>Associate Time:</strong> <span style={{color: 'var(--color-eu)', fontWeight: 'bold'}}>{log.associateTimeDesc}</span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
