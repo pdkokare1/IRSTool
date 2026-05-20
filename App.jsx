@@ -42,33 +42,41 @@ export default function App() {
     const currentAssociateTz = officeTimezones[associateLocation];
     const now = new Date();
 
-    const options = { timeZone: country.timezone, hour: 'numeric', minute: 'numeric', hour12: true };
-    const localTimeString = new Intl.DateTimeFormat('en-US', options).format(now);
-
-    const hourOptions = { timeZone: country.timezone, hour: 'numeric', hour12: false };
-    const localHour = parseInt(new Intl.DateTimeFormat('en-US', hourOptions).format(now), 10);
-
+    let localTimeString = "Error";
+    let localHour = 0;
     let callStatus = 'unavailable';
-    if (localHour >= 9 && localHour < 17) callStatus = 'available';
-    else if (localHour >= 7 && localHour < 9) callStatus = 'soon';
+    let offsetText = "Unknown offset";
+    let diffMins = 0;
 
-    const dateAssociate = new Date(now.toLocaleString('en-US', { timeZone: currentAssociateTz }));
-    const dateTarget = new Date(now.toLocaleString('en-US', { timeZone: country.timezone }));
-    
-    // Calculate the exact minute difference between Target and Associate
-    const diffMins = Math.round((dateTarget - dateAssociate) / 60000);
-    
-    let offsetText = "Same time zone";
-    if (diffMins !== 0) {
-      const hrs = Math.floor(Math.abs(diffMins) / 60);
-      const mins = Math.abs(diffMins) % 60;
-      let timeStr = '';
-      if (hrs > 0) timeStr += `${hrs}h`;
-      if (mins > 0) timeStr += ` ${mins}m`;
-      offsetText = diffMins > 0 ? `${timeStr.trim()} ahead` : `${timeStr.trim()} behind`;
+    // Wrapped in a try/catch so one bad timezone never crashes the site again
+    try {
+      const options = { timeZone: country.timezone, hour: 'numeric', minute: 'numeric', hour12: true };
+      localTimeString = new Intl.DateTimeFormat('en-US', options).format(now);
+
+      const hourOptions = { timeZone: country.timezone, hour: 'numeric', hour12: false };
+      localHour = parseInt(new Intl.DateTimeFormat('en-US', hourOptions).format(now), 10);
+
+      if (localHour >= 9 && localHour < 17) callStatus = 'available';
+      else if (localHour >= 7 && localHour < 9) callStatus = 'soon';
+
+      const dateAssociate = new Date(now.toLocaleString('en-US', { timeZone: currentAssociateTz }));
+      const dateTarget = new Date(now.toLocaleString('en-US', { timeZone: country.timezone }));
+      
+      diffMins = Math.round((dateTarget - dateAssociate) / 60000);
+      
+      offsetText = "Same time zone";
+      if (diffMins !== 0) {
+        const hrs = Math.floor(Math.abs(diffMins) / 60);
+        const mins = Math.abs(diffMins) % 60;
+        let timeStr = '';
+        if (hrs > 0) timeStr += `${hrs}h`;
+        if (mins > 0) timeStr += ` ${mins}m`;
+        offsetText = diffMins > 0 ? `${timeStr.trim()} ahead` : `${timeStr.trim()} behind`;
+      }
+    } catch (err) {
+      console.warn(`Timezone validation failed for ${country.name} using string "${country.timezone}"`);
     }
 
-    // Return diffMins so we can use it in the reverse calculation later
     return { ...country, localTimeString, callStatus, offsetText, diffMins };
   });
 
@@ -262,7 +270,6 @@ export default function App() {
         .preset-btn { background-color: #FFF; border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 12px; font-weight: 600; color: var(--color-eu); cursor: pointer; transition: all 0.2s; flex: 1; text-align: center; }
         .preset-btn:hover { background-color: #EFF6FF; border-color: rgba(59, 130, 246, 0.3); }
 
-        /* Updated CSS: flex-wrap ensures components drop to next line cleanly if squeezed */
         .datetime-row { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; flex-wrap: wrap; }
         .converter-input { flex: 1; min-width: 130px; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border); font-family: inherit; font-size: 14px; font-weight: 500; outline: none; transition: all 0.2s; background-color: #FFF; color: var(--text-main); box-sizing: border-box; }
         .converter-input:focus { border-color: var(--color-eu); box-shadow: 0 0 0 4px rgba(59,130,246,0.15); }
