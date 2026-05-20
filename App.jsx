@@ -259,13 +259,13 @@ export default function App() {
         .card-soon::before { background: var(--grad-soon); }
         .card-bad::before { background: var(--grad-bad); }
         
-        /* New structured card rows */
-        .card-top-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-        .card-offset { font-size: 14px; font-weight: 600; color: var(--text-muted); margin: 0; opacity: 0.9; }
-        
-        .card-main-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; }
+        /* Updated structured card rows */
+        .card-main-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
         .card-country { font-size: 24px; font-weight: 800; margin: 0; color: var(--text-main); letter-spacing: -0.03em; }
-        .card-time { font-size: 34px; font-weight: 900; margin: 0; color: var(--text-main); font-variant-numeric: tabular-nums; letter-spacing: -0.04em; line-height: 1; }
+        .card-time { font-size: 30px; font-weight: 900; margin: 0; color: var(--text-main); font-variant-numeric: tabular-nums; letter-spacing: -0.04em; line-height: 1; }
+        
+        .card-sub-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; min-height: 24px; }
+        .card-offset { font-size: 14px; font-weight: 600; color: var(--text-muted); margin: 0; opacity: 0.9; text-align: right; }
         
         .card-actions-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-top: 16px; border-top: 1px solid var(--border); }
         
@@ -284,17 +284,16 @@ export default function App() {
         .btn-close { background: none; border: none; font-size: 20px; color: #94A3B8; cursor: pointer; line-height: 1; padding: 0; transition: color 0.2s; }
         .btn-close:hover { color: #0F172A; }
 
-        /* Centered Inputs & Presets */
         .preset-container { display: flex; gap: 8px; margin-bottom: 16px; justify-content: center; }
         .preset-btn { background-color: #FFF; border: 1px solid var(--border); border-radius: 8px; padding: 6px 16px; font-size: 12px; font-weight: 600; color: var(--color-eu); cursor: pointer; transition: all 0.2s; }
         .preset-btn:hover { background-color: #EFF6FF; border-color: rgba(59, 130, 246, 0.3); }
 
-        .datetime-column { display: flex; flexDirection: column; align-items: center; gap: 16px; margin-bottom: 20px; }
+        .datetime-column { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 20px; }
         
-        .converter-input { width: 100%; max-width: 200px; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border); font-family: inherit; font-size: 14px; font-weight: 500; outline: none; transition: all 0.2s; background-color: #FFF; color: var(--text-main); box-sizing: border-box; text-align: center; }
-        .converter-input:focus { border-color: var(--color-eu); box-shadow: 0 0 0 4px rgba(59,130,246,0.15); }
+        /* New Custom Date Picker Container */
+        .date-picker-container { display: flex; gap: 6px; justify-content: center; box-sizing: border-box; align-items: center; }
         
-        .time-picker-container { display: flex; gap: 6px; justify-content: center; box-sizing: border-box; }
+        .time-picker-container { display: flex; gap: 6px; justify-content: center; box-sizing: border-box; align-items: center; }
         .time-select { padding: 10px 8px; border-radius: 10px; border: 1px solid var(--border); font-family: inherit; font-size: 14px; font-weight: 500; outline: none; transition: all 0.2s; background-color: #FFF; color: var(--text-main); cursor: pointer; appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 8px center; background-size: 12px; padding-right: 24px; }
         .time-select:focus { border-color: var(--color-eu); box-shadow: 0 0 0 4px rgba(59,130,246,0.15); }
         .ampm-toggle { display: flex; background: #F1F5F9; border-radius: 8px; padding: 4px; gap: 4px; }
@@ -411,10 +410,31 @@ export default function App() {
                   handleDateTimeChange(country.name, 'time', newTime);
                 };
 
+                // Helper to update Date string cleanly for custom DD/MM/YYYY inputs
+                const handleDatePartChange = (part, value) => {
+                  const todayDate = new Date();
+                  const defY = todayDate.getFullYear();
+                  const defM = String(todayDate.getMonth() + 1).padStart(2, '0');
+                  const defD = String(todayDate.getDate()).padStart(2, '0');
+
+                  let [y, m, d] = (convState.date || `${defY}-${defM}-${defD}`).split('-');
+                  
+                  if (part === 'dd') d = value.padStart(2, '0');
+                  if (part === 'mm') m = value.padStart(2, '0');
+                  if (part === 'yyyy') y = value;
+                  
+                  handleDateTimeChange(country.name, 'date', `${y}-${m}-${d}`);
+                };
+
                 const currentT = convState.time || '09:00';
                 const [h24, m] = currentT.split(':');
                 const isPM = parseInt(h24, 10) >= 12;
                 const h12 = parseInt(h24, 10) % 12 || 12;
+
+                const defaultDate = new Date();
+                const currentDateStr = convState.date || `${defaultDate.getFullYear()}-${String(defaultDate.getMonth() + 1).padStart(2, '0')}-${String(defaultDate.getDate()).padStart(2, '0')}`;
+                const [curY, curM, curD] = currentDateStr.split('-');
+                const currentYear = defaultDate.getFullYear();
                 
                 let targetDateStr = '';
                 if (convState.date) {
@@ -447,15 +467,17 @@ export default function App() {
                 return (
                   <div key={country.name} className={`card ${cardClass}`}>
                     <div>
-                      {/* NEW CARD LAYOUT */}
-                      <div className="card-top-row">
-                        {country.isEU && <span className="badge badge-eu">🇪🇺 GDPR</span>}
-                        <span className="card-offset">{country.offsetText}</span>
-                      </div>
-                      
+                      {/* UPDATED CARD LAYOUT */}
                       <div className="card-main-row">
                         <h2 className="card-country">{country.name}</h2>
                         <p className="card-time">{country.localTimeString}</p>
+                      </div>
+                      
+                      <div className="card-sub-row">
+                        <div style={{flex: 1}}>
+                          {country.isEU && <span className="badge badge-eu">🇪🇺 GDPR</span>}
+                        </div>
+                        <span className="card-offset">{country.offsetText}</span>
                       </div>
                       
                       <div className="card-actions-row">
@@ -481,13 +503,43 @@ export default function App() {
                           </div>
 
                           <div className="datetime-column">
-                            <input 
-                              type="date" 
-                              className="converter-input"
-                              value={convState.date}
-                              onChange={(e) => handleDateTimeChange(country.name, 'date', e.target.value)}
-                            />
                             
+                            {/* New DD/MM/YYYY Custom Date Picker */}
+                            <div className="date-picker-container">
+                              <select 
+                                className="time-select" 
+                                value={curD} 
+                                onChange={(e) => handleDatePartChange('dd', e.target.value)}
+                              >
+                                {[...Array(31)].map((_, i) => {
+                                  const val = String(i + 1).padStart(2, '0');
+                                  return <option key={val} value={val}>{val}</option>;
+                                })}
+                              </select>
+                              <span style={{ fontWeight: 'bold', color: 'var(--text-muted)' }}>/</span>
+                              <select 
+                                className="time-select" 
+                                value={curM} 
+                                onChange={(e) => handleDatePartChange('mm', e.target.value)}
+                              >
+                                {[...Array(12)].map((_, i) => {
+                                  const val = String(i + 1).padStart(2, '0');
+                                  return <option key={val} value={val}>{val}</option>;
+                                })}
+                              </select>
+                              <span style={{ fontWeight: 'bold', color: 'var(--text-muted)' }}>/</span>
+                              <select 
+                                className="time-select" 
+                                value={curY} 
+                                onChange={(e) => handleDatePartChange('yyyy', e.target.value)}
+                              >
+                                {[currentYear, currentYear + 1, currentYear + 2].map(y => (
+                                  <option key={y} value={y}>{y}</option>
+                                ))}
+                              </select>
+                            </div>
+
+                            {/* Centered Time Picker */}
                             <div className="time-picker-container">
                               <select 
                                 className="time-select" 
@@ -498,7 +550,7 @@ export default function App() {
                                   <option key={i + 1} value={i + 1}>{i + 1}</option>
                                 ))}
                               </select>
-                              <span style={{ fontWeight: 'bold', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>:</span>
+                              <span style={{ fontWeight: 'bold', color: 'var(--text-muted)' }}>:</span>
                               <select 
                                 className="time-select" 
                                 value={m} 
