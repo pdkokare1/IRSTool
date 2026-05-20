@@ -208,6 +208,12 @@ export default function App() {
     alert("Appointment successfully saved to log!");
   };
 
+  const handleClearLogs = () => {
+    if (window.confirm("Are you sure you want to delete all saved logs? This cannot be undone.")) {
+      setAppointmentLogs([]);
+    }
+  };
+
   const DrawerList = ({ title, items, dotClass }) => {
     if (items.length === 0) return null;
     return (
@@ -367,6 +373,9 @@ export default function App() {
         .converter-result span { color: var(--text-main); font-weight: 800; display: block; margin-top: 6px; font-size: 18px; letter-spacing: -0.02em; }
         
         .dst-warning { font-size: 13px; color: #B45309; background: #FFFBEB; padding: 10px 14px; border-radius: 8px; margin-top: 12px; border: 1px solid rgba(245, 158, 11, 0.3); font-weight: 600; display: flex; align-items: flex-start; gap: 8px; line-height: 1.4; animation: fadeIn 0.3s ease; }
+        .date-alert-badge { display: inline-block; padding: 2px 8px; font-size: 11px; font-weight: 800; border-radius: 4px; margin-top: 6px; border: 1px solid transparent; text-transform: uppercase; letter-spacing: 0.03em; }
+        .badge-alert-weekend { background-color: #FEF2F2; color: #EF4444; border-color: rgba(239, 68, 68, 0.15); }
+        .badge-alert-past { background-color: #F1F5F9; color: #475569; border-color: rgba(71, 85, 105, 0.15); }
         
         .btn-remove { width: 100%; padding: 14px; background-color: #FFF; border: 1px solid var(--border); border-radius: 12px; color: var(--text-muted); font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; margin-top: auto; }
         .btn-remove:hover { background-color: #FEF2F2; color: #EF4444; border-color: #FECACA; }
@@ -375,6 +384,8 @@ export default function App() {
         .btn-view-logs:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); border-color: var(--color-eu); }
         .btn-save-log { margin-top: 12px; width: 100%; padding: 10px; border-radius: 10px; font-size: 13px; font-weight: 700; background-color: #EFF6FF; color: var(--color-eu); border: 1px solid rgba(59, 130, 246, 0.2); cursor: pointer; transition: all 0.2s; }
         .btn-save-log:hover { background-color: var(--color-eu); color: #FFF; }
+        .btn-clear-logs-action { background: none; border: none; font-size: 13px; font-weight: 700; color: #EF4444; cursor: pointer; padding: 4px 8px; border-radius: 6px; transition: background 0.2s; }
+        .btn-clear-logs-action:hover { background: #FEF2F2; }
 
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,23,42,0.4); display: flex; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(4px); animation: fadeIn 0.2s ease; }
         .modal-content { background: #FFF; width: 90%; max-width: 500px; max-height: 80vh; border-radius: 20px; box-shadow: var(--shadow-hover); display: flex; flex-direction: column; overflow: hidden; animation: slideUp 0.3s ease; }
@@ -507,6 +518,8 @@ export default function App() {
                 const convState = converterState[country.name] || { isOpen: false, date: '', time: '' };
                 let convertedAssociateTime = null;
                 let hasDstWarning = false;
+                let isWeekendTarget = false;
+                let isPastTarget = false;
                 
                 const handleTimePartChange = (part, value) => {
                   const currentTime = convState.time || '09:00';
@@ -532,6 +545,22 @@ export default function App() {
                 if (convState.date) {
                   const [y, mmTarget, d] = convState.date.split('-');
                   targetDateStr = `${d}/${mmTarget}/${y}`;
+                  
+                  // Weekend Validation Tracking Check
+                  try {
+                    const selectedDateObj = new Date(convState.date + 'T00:00:00');
+                    const dayOfWeek = selectedDateObj.getDay(); 
+                    if (dayOfWeek === 0 || dayOfWeek === 6) {
+                      isWeekendTarget = true;
+                    }
+                    
+                    // Past Date Detection Check
+                    const todayNoon = new Date();
+                    todayNoon.setHours(0,0,0,0);
+                    if (selectedDateObj < todayNoon) {
+                      isPastTarget = true;
+                    }
+                  } catch(e) {}
                 }
 
                 const targetFormattedTime = convState.time 
@@ -669,6 +698,13 @@ export default function App() {
                                 When it is {targetFormattedTime} {convState.date && `on ${targetDateStr}`} in {country.name}, it will be:
                                 <span style={{color: 'var(--color-eu)'}}>{convertedAssociateTime}</span>
                                 in <strong>{officeLabels[associateLocation]}</strong>.
+                                
+                                {isWeekendTarget && (
+                                  <div className="date-alert-badge badge-alert-weekend">⚠️ Weekend Appointment</div>
+                                )}
+                                {isPastTarget && (
+                                  <div className="date-alert-badge badge-alert-past">📅 Note: Past Date</div>
+                                )}
                               </div>
                               
                               {hasDstWarning && (
@@ -712,7 +748,14 @@ export default function App() {
           <div className="modal-overlay" onClick={() => setIsLogModalOpen(false)}>
             <div className="modal-content" onClick={e => e.stopPropagation()}>
               <div className="modal-header">
-                <h2>Appointment Logs</h2>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <h2>Appointment Logs</h2>
+                  {appointmentLogs.length > 0 && (
+                    <button className="btn-clear-logs-action" onClick={handleClearLogs}>
+                      Clear All Logs
+                    </button>
+                  )}
+                </div>
                 <button className="btn-close" onClick={() => setIsLogModalOpen(false)}>&times;</button>
               </div>
               <div className="modal-body">
