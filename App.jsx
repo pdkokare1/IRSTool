@@ -22,6 +22,14 @@ export default function App() {
   });
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
 
+  // --- NEW CALLING WINDOW SETTINGS ---
+  const [callWindowStart, setCallWindowStart] = useState(() => {
+    return parseInt(localStorage.getItem('callWindowStart')) || 9;
+  });
+  const [callWindowEnd, setCallWindowEnd] = useState(() => {
+    return parseInt(localStorage.getItem('callWindowEnd')) || 17;
+  });
+
   const [converterState, setConverterState] = useState({});
 
   const officeTimezones = {
@@ -39,6 +47,8 @@ export default function App() {
   useEffect(() => localStorage.setItem('associateLoc_v2', associateLocation), [associateLocation]);
   useEffect(() => localStorage.setItem('selectedCountries', JSON.stringify(selectedCountries)), [selectedCountries]);
   useEffect(() => localStorage.setItem('appointmentLogs', JSON.stringify(appointmentLogs)), [appointmentLogs]);
+  useEffect(() => localStorage.setItem('callWindowStart', callWindowStart.toString()), [callWindowStart]);
+  useEffect(() => localStorage.setItem('callWindowEnd', callWindowEnd.toString()), [callWindowEnd]);
 
   useEffect(() => {
     const interval = setInterval(() => setTicker(Date.now()), 60000);
@@ -62,8 +72,12 @@ export default function App() {
       const hourOptions = { timeZone: country.timezone, hour: 'numeric', hour12: false };
       localHour = parseInt(new Intl.DateTimeFormat('en-US', hourOptions).format(now), 10);
 
-      if (localHour >= 9 && localHour < 17) callStatus = 'available';
-      else if (localHour >= 7 && localHour < 9) callStatus = 'soon';
+      // Dynamic calculation based on user settings
+      if (localHour >= callWindowStart && localHour < callWindowEnd) {
+        callStatus = 'available';
+      } else if (localHour >= (callWindowStart - 2) && localHour < callWindowStart) {
+        callStatus = 'soon';
+      }
 
       const dateAssociate = new Date(now.toLocaleString('en-US', { timeZone: currentAssociateTz }));
       const dateTarget = new Date(now.toLocaleString('en-US', { timeZone: country.timezone }));
@@ -80,7 +94,7 @@ export default function App() {
         offsetText = diffMins > 0 ? `${timeStr.trim()} ahead` : `${timeStr.trim()} behind`;
       }
     } catch (err) {
-      console.warn(`Timezone validation failed for ${country.name} using string "${country.timezone}"`);
+      console.warn(`Timezone validation failed for ${country.name}`);
     }
 
     return { ...country, localTimeString, callStatus, offsetText, diffMins };
@@ -231,6 +245,14 @@ export default function App() {
         
         .drawer-scroll { flex: 1; overflow-y: auto; padding: 20px 24px; }
         
+        /* Settings Section inside Drawer */
+        .drawer-settings { padding: 20px 24px; background: #F8FAFC; border-top: 1px solid var(--border); }
+        .settings-title { font-size: 12px; text-transform: uppercase; color: var(--text-muted); font-weight: 800; margin: 0 0 12px 0; letter-spacing: 0.05em; }
+        .settings-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .settings-select { padding: 8px; border-radius: 8px; border: 1px solid var(--border); font-size: 13px; font-weight: 600; color: var(--text-main); outline: none; cursor: pointer; flex: 1; text-align: center; }
+        .settings-select:focus { border-color: var(--color-eu); }
+        .settings-label { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+
         .list-section { margin-bottom: 28px; }
         .list-header { font-size: 12px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin: 0 0 14px 0; letter-spacing: 0.08em; display: flex; align-items: center; }
         .list-header .count { margin-left: 6px; opacity: 0.7; font-weight: 600; }
@@ -259,7 +281,6 @@ export default function App() {
         .card-soon::before { background: var(--grad-soon); }
         .card-bad::before { background: var(--grad-bad); }
         
-        /* Updated structured card rows */
         .card-main-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
         .card-country { font-size: 24px; font-weight: 800; margin: 0; color: var(--text-main); letter-spacing: -0.03em; }
         .card-time { font-size: 30px; font-weight: 900; margin: 0; color: var(--text-main); font-variant-numeric: tabular-nums; letter-spacing: -0.04em; line-height: 1; }
@@ -290,8 +311,11 @@ export default function App() {
 
         .datetime-column { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 20px; }
         
-        /* New Custom Date Picker Container */
-        .date-picker-container { display: flex; gap: 6px; justify-content: center; box-sizing: border-box; align-items: center; }
+        /* GHOST INPUT UI TRICK */
+        .ghost-date-wrapper { position: relative; width: 100%; max-width: 180px; margin: 0 auto; display: inline-block; }
+        .ghost-date-display { padding: 10px 14px; background: #FFF; border: 1px solid var(--border); border-radius: 10px; font-size: 14px; font-weight: 600; color: var(--text-main); text-align: center; cursor: pointer; transition: all 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
+        .ghost-date-wrapper:hover .ghost-date-display { border-color: var(--color-eu); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+        .ghost-date-input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; box-sizing: border-box; }
         
         .time-picker-container { display: flex; gap: 6px; justify-content: center; box-sizing: border-box; align-items: center; }
         .time-select { padding: 10px 8px; border-radius: 10px; border: 1px solid var(--border); font-family: inherit; font-size: 14px; font-weight: 500; outline: none; transition: all 0.2s; background-color: #FFF; color: var(--text-main); cursor: pointer; appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 8px center; background-size: 12px; padding-right: 24px; }
@@ -362,6 +386,35 @@ export default function App() {
               <p style={{textAlign: 'center', color: 'var(--text-muted)', marginTop: '24px', fontSize: '14px', fontWeight: '500'}}>No matching countries found.</p>
             )}
           </div>
+
+          {/* NEW SETTINGS SECTION */}
+          <div className="drawer-settings">
+            <h3 className="settings-title">Target Business Hours</h3>
+            <div className="settings-row">
+              <select 
+                className="settings-select" 
+                value={callWindowStart} 
+                onChange={(e) => setCallWindowStart(parseInt(e.target.value))}
+              >
+                <option value={7}>07:00 AM</option>
+                <option value={8}>08:00 AM</option>
+                <option value={9}>09:00 AM</option>
+                <option value={10}>10:00 AM</option>
+              </select>
+              <span className="settings-label">to</span>
+              <select 
+                className="settings-select" 
+                value={callWindowEnd} 
+                onChange={(e) => setCallWindowEnd(parseInt(e.target.value))}
+              >
+                <option value={15}>03:00 PM</option>
+                <option value={16}>04:00 PM</option>
+                <option value={17}>05:00 PM</option>
+                <option value={18}>06:00 PM</option>
+                <option value={19}>07:00 PM</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         {/* RIGHT CANVAS */}
@@ -410,31 +463,10 @@ export default function App() {
                   handleDateTimeChange(country.name, 'time', newTime);
                 };
 
-                // Helper to update Date string cleanly for custom DD/MM/YYYY inputs
-                const handleDatePartChange = (part, value) => {
-                  const todayDate = new Date();
-                  const defY = todayDate.getFullYear();
-                  const defM = String(todayDate.getMonth() + 1).padStart(2, '0');
-                  const defD = String(todayDate.getDate()).padStart(2, '0');
-
-                  let [y, m, d] = (convState.date || `${defY}-${defM}-${defD}`).split('-');
-                  
-                  if (part === 'dd') d = value.padStart(2, '0');
-                  if (part === 'mm') m = value.padStart(2, '0');
-                  if (part === 'yyyy') y = value;
-                  
-                  handleDateTimeChange(country.name, 'date', `${y}-${m}-${d}`);
-                };
-
                 const currentT = convState.time || '09:00';
                 const [h24, m] = currentT.split(':');
                 const isPM = parseInt(h24, 10) >= 12;
                 const h12 = parseInt(h24, 10) % 12 || 12;
-
-                const defaultDate = new Date();
-                const currentDateStr = convState.date || `${defaultDate.getFullYear()}-${String(defaultDate.getMonth() + 1).padStart(2, '0')}-${String(defaultDate.getDate()).padStart(2, '0')}`;
-                const [curY, curM, curD] = currentDateStr.split('-');
-                const currentYear = defaultDate.getFullYear();
                 
                 let targetDateStr = '';
                 if (convState.date) {
@@ -467,7 +499,6 @@ export default function App() {
                 return (
                   <div key={country.name} className={`card ${cardClass}`}>
                     <div>
-                      {/* UPDATED CARD LAYOUT */}
                       <div className="card-main-row">
                         <h2 className="card-country">{country.name}</h2>
                         <p className="card-time">{country.localTimeString}</p>
@@ -504,39 +535,17 @@ export default function App() {
 
                           <div className="datetime-column">
                             
-                            {/* New DD/MM/YYYY Custom Date Picker */}
-                            <div className="date-picker-container">
-                              <select 
-                                className="time-select" 
-                                value={curD} 
-                                onChange={(e) => handleDatePartChange('dd', e.target.value)}
-                              >
-                                {[...Array(31)].map((_, i) => {
-                                  const val = String(i + 1).padStart(2, '0');
-                                  return <option key={val} value={val}>{val}</option>;
-                                })}
-                              </select>
-                              <span style={{ fontWeight: 'bold', color: 'var(--text-muted)' }}>/</span>
-                              <select 
-                                className="time-select" 
-                                value={curM} 
-                                onChange={(e) => handleDatePartChange('mm', e.target.value)}
-                              >
-                                {[...Array(12)].map((_, i) => {
-                                  const val = String(i + 1).padStart(2, '0');
-                                  return <option key={val} value={val}>{val}</option>;
-                                })}
-                              </select>
-                              <span style={{ fontWeight: 'bold', color: 'var(--text-muted)' }}>/</span>
-                              <select 
-                                className="time-select" 
-                                value={curY} 
-                                onChange={(e) => handleDatePartChange('yyyy', e.target.value)}
-                              >
-                                {[currentYear, currentYear + 1, currentYear + 2].map(y => (
-                                  <option key={y} value={y}>{y}</option>
-                                ))}
-                              </select>
+                            {/* GHOST CALENDAR TRICK */}
+                            <div className="ghost-date-wrapper">
+                              <div className="ghost-date-display">
+                                📅 {convState.date ? targetDateStr : "Select Date"}
+                              </div>
+                              <input 
+                                type="date" 
+                                className="ghost-date-input"
+                                value={convState.date || ''}
+                                onChange={(e) => handleDateTimeChange(country.name, 'date', e.target.value)}
+                              />
                             </div>
 
                             {/* Centered Time Picker */}
@@ -550,7 +559,7 @@ export default function App() {
                                   <option key={i + 1} value={i + 1}>{i + 1}</option>
                                 ))}
                               </select>
-                              <span style={{ fontWeight: 'bold', color: 'var(--text-muted)' }}>:</span>
+                              <span style={{ fontWeight: 'bold', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>:</span>
                               <select 
                                 className="time-select" 
                                 value={m} 
