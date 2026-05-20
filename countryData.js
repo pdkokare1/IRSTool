@@ -150,7 +150,7 @@ export const countries = [
   { name: "Qatar", timezone: "Asia/Qatar", isEU: false },
   { name: "Russia", timezone: "Europe/Moscow", isEU: false },
   { name: "Rwanda", timezone: "Africa/Kigali", isEU: false },
-  { name: "Saint Kitts and Nevis", timezone: "America/Kitts", isEU: false },
+  { name: "Saint Kitts and Nevis", timezone: "America/St_Kitts", isEU: false },
   { name: "Saint Lucia", timezone: "America/St_Lucia", isEU: false },
   { name: "Saint Vincent and the Grenadines", timezone: "America/St_Vincent", isEU: false },
   { name: "Samoa", timezone: "Pacific/Apia", isEU: false },
