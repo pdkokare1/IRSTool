@@ -25,9 +25,9 @@ export default function App() {
   };
 
   const officeLabels = {
-    'IN': 'India Office',
-    'US': 'US Office (EST)',
-    'UK': 'UK Office'
+    'IN': 'India',
+    'US': 'United States (EST)',
+    'UK': 'United Kingdom'
   };
 
   useEffect(() => localStorage.setItem('associateLoc_v2', associateLocation), [associateLocation]);
@@ -262,19 +262,19 @@ export default function App() {
         .preset-btn { background-color: #FFF; border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 12px; font-weight: 600; color: var(--color-eu); cursor: pointer; transition: all 0.2s; flex: 1; text-align: center; }
         .preset-btn:hover { background-color: #EFF6FF; border-color: rgba(59, 130, 246, 0.3); }
 
-        .datetime-row { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; }
-        .converter-input { flex: 1; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border); font-family: inherit; font-size: 14px; font-weight: 500; outline: none; transition: all 0.2s; background-color: #FFF; color: var(--text-main); }
+        /* Updated CSS: flex-wrap ensures components drop to next line cleanly if squeezed */
+        .datetime-row { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; flex-wrap: wrap; }
+        .converter-input { flex: 1; min-width: 130px; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border); font-family: inherit; font-size: 14px; font-weight: 500; outline: none; transition: all 0.2s; background-color: #FFF; color: var(--text-main); box-sizing: border-box; }
         .converter-input:focus { border-color: var(--color-eu); box-shadow: 0 0 0 4px rgba(59,130,246,0.15); }
         
-        /* New custom time picker styles */
-        .time-picker-container { display: flex; gap: 6px; flex: 1; align-items: center; }
-        .time-select { padding: 12px 10px; border-radius: 10px; border: 1px solid var(--border); font-family: inherit; font-size: 14px; font-weight: 500; outline: none; transition: all 0.2s; background-color: #FFF; color: var(--text-main); cursor: pointer; appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 8px center; background-size: 12px; padding-right: 28px; }
+        .time-picker-container { display: flex; gap: 6px; flex: 1; align-items: center; min-width: 210px; box-sizing: border-box; }
+        .time-select { padding: 10px 8px; border-radius: 10px; border: 1px solid var(--border); font-family: inherit; font-size: 14px; font-weight: 500; outline: none; transition: all 0.2s; background-color: #FFF; color: var(--text-main); cursor: pointer; appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 8px center; background-size: 12px; padding-right: 24px; }
         .time-select:focus { border-color: var(--color-eu); box-shadow: 0 0 0 4px rgba(59,130,246,0.15); }
         .ampm-toggle { display: flex; background: #F1F5F9; border-radius: 8px; padding: 4px; gap: 4px; }
         .ampm-btn { border: none; background: transparent; padding: 6px 10px; font-size: 13px; font-weight: 700; color: #64748B; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
         .ampm-btn.active { background: #FFF; color: var(--color-eu); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 
-        .converter-result { font-size: 14px; font-weight: 600; color: var(--text-muted); background: #FFF; padding: 16px; border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); border-left: 4px solid var(--color-eu); }
+        .converter-result { font-size: 14px; font-weight: 600; color: var(--text-muted); background: #FFF; padding: 16px; border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); border-left: 4px solid var(--color-eu); line-height: 1.5; }
         .converter-result span { color: var(--text-main); font-weight: 800; display: block; margin-top: 6px; font-size: 18px; letter-spacing: -0.02em; }
         
         .btn-remove { width: 100%; padding: 14px; background-color: #FFF; border: 1px solid var(--border); border-radius: 12px; color: var(--text-muted); font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; margin-top: auto; }
@@ -295,9 +295,9 @@ export default function App() {
               value={associateLocation}
               onChange={(e) => setAssociateLocation(e.target.value)}
             >
-              <option value="IN">🇮🇳 India Office</option>
-              <option value="US">🇺🇸 US Office (EST)</option>
-              <option value="UK">🇬🇧 UK Office</option>
+              <option value="IN">🇮🇳 India</option>
+              <option value="US">🇺🇸 United States (EST)</option>
+              <option value="UK">🇬🇧 United Kingdom</option>
             </select>
 
             <input 
@@ -347,7 +347,6 @@ export default function App() {
                 const convState = converterState[country.name] || { isOpen: false, date: '', time: '' };
                 let convertedAssociateTime = null;
                 
-                // Helper to manage custom time picker changes behind the scenes
                 const handleTimePartChange = (part, value) => {
                   const currentTime = convState.time || '09:00';
                   let [hours, minutes] = currentTime.split(':');
@@ -363,19 +362,23 @@ export default function App() {
                   handleDateTimeChange(country.name, 'time', newTime);
                 };
 
-                // Time math for custom UI defaults
                 const currentT = convState.time || '09:00';
                 const [h24, m] = currentT.split(':');
                 const isPM = parseInt(h24, 10) >= 12;
                 const h12 = parseInt(h24, 10) % 12 || 12;
                 
-                // Reverse math logic: Convert target's input time to associate's local time
+                // Format the target date string for the prompt
+                let targetDateStr = '';
+                if (convState.date) {
+                  const [y, mmTarget, d] = convState.date.split('-');
+                  targetDateStr = `${d}/${mmTarget}/${y}`;
+                }
+
                 if (convState.date && convState.time) {
                   try {
                     const inputDate = new Date(`${convState.date}T${convState.time}`);
                     const associateDate = new Date(inputDate.getTime() - (country.diffMins * 60000));
                     
-                    // Format DD/MM/YYYY, hh:mm A
                     const dd = String(associateDate.getDate()).padStart(2, '0');
                     const mm = String(associateDate.getMonth() + 1).padStart(2, '0');
                     const yyyy = associateDate.getFullYear();
@@ -432,7 +435,6 @@ export default function App() {
                               onChange={(e) => handleDateTimeChange(country.name, 'date', e.target.value)}
                             />
                             
-                            {/* New Custom Time Picker UI */}
                             <div className="time-picker-container">
                               <select 
                                 className="time-select" 
@@ -468,9 +470,9 @@ export default function App() {
                           
                           {convertedAssociateTime && (
                             <div className="converter-result">
-                              When it is {convState.time && new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: 'numeric', hour12: true }).format(new Date(`2000-01-01T${convState.time}`))} in {country.name}, it will be:
+                              When it is {convState.time && new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: 'numeric', hour12: true }).format(new Date(`2000-01-01T${convState.time}`))} {convState.date && `on ${targetDateStr}`} in {country.name}, it will be:
                               <span style={{color: 'var(--color-eu)'}}>{convertedAssociateTime}</span>
-                              in the <strong>{officeLabels[associateLocation]}</strong>.
+                              in <strong>{officeLabels[associateLocation]}</strong>.
                             </div>
                           )}
                         </div>
