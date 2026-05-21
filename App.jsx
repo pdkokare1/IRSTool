@@ -37,6 +37,9 @@ export default function App() {
   const [scaleFactor, setScaleFactor] = useState(1);
   const canvasRef = useRef(null);
 
+  // Call Flow checklist progress trackers state 
+  const [completedSteps, setCompletedSteps] = useState([]);
+
   const [associateLocation, setAssociateLocation] = useState(() => {
     return localStorage.getItem('associateLoc_v2') || 'IN';
   });
@@ -73,6 +76,19 @@ export default function App() {
     'UK': 'United Kingdom'
   };
 
+  // Structured step guideline checklist array configurations
+  const callFlowSteps = [
+    "Greet",
+    "Introduce",
+    "Explain Purpose",
+    "Monitoring Disclaimer",
+    "Right to Privacy Disclaimer",
+    "E-Mail Confirmation",
+    "Survey",
+    "Closing Privacy Disclaimer",
+    "Thanks and Regards"
+  ];
+
   useEffect(() => localStorage.setItem('associateLoc_v2', associateLocation), [associateLocation]);
   useEffect(() => localStorage.setItem('selectedCountries', JSON.stringify(selectedCountries)), [selectedCountries]);
   useEffect(() => localStorage.setItem('appointmentLogs', JSON.stringify(appointmentLogs)), [appointmentLogs]);
@@ -95,13 +111,11 @@ export default function App() {
       const container = canvasRef.current;
       if (!container) return;
 
-      // Start by resetting style measurements to default base layout guidelines
       container.style.setProperty('--scale-mult', '1');
 
       let currentScale = 1;
-      const minScale = 0.65; // Safe minimum readability ceiling protection
+      const minScale = 0.65; 
 
-      // Iteratively check scroll heights vs structural client height limits
       while (
         container.scrollHeight > container.clientHeight && 
         currentScale > minScale
@@ -118,7 +132,6 @@ export default function App() {
     });
 
     observer.observe(canvasRef.current);
-    // Extra invocation layer handling dynamic sub-panel expanded changes accurately
     checkOverflowAndResize();
 
     return () => observer.disconnect();
@@ -197,6 +210,14 @@ export default function App() {
       setSelectedCountries(selectedCountries.filter(name => name !== countryName));
     } else {
       setSelectedCountries([...selectedCountries, countryName]);
+    }
+  };
+
+  const toggleStep = (stepName) => {
+    if (completedSteps.includes(stepName)) {
+      setCompletedSteps(completedSteps.filter(s => s !== stepName));
+    } else {
+      setCompletedSteps([...completedSteps, stepName]);
     }
   };
 
@@ -313,8 +334,6 @@ export default function App() {
           --bg-bad: #F8FAFC;
           
           --color-eu: #3B82F6;
-          
-          /* Scalemultiplier default dynamic fallback rule */
           --scale-mult: 1;
         }
 
@@ -375,10 +394,8 @@ export default function App() {
         .canvas-empty h2 { font-size: 24px; font-weight: 800; color: var(--text-main); margin-bottom: 8px; letter-spacing: -0.03em; }
         .canvas-empty p { font-size: 14px; max-width: 380px; line-height: 1.6; color: #64748B; margin: 0; }
         
-        /* Left-aligned flexible grid matching standard sizes smoothly */
         .grid { display: flex; flex-wrap: wrap; gap: 16px; align-content: start; justify-content: flex-start; width: 100%; box-sizing: border-box; flex: 1; }
         
-        /* Fully responsive cards leveraging custom CSS variables based on view bounds */
         .card { 
           background-color: #FFF; 
           width: calc(330px * var(--scale-mult));
@@ -402,7 +419,6 @@ export default function App() {
         .card-soon::before { background: var(--grad-soon); }
         .card-bad::before { background: var(--grad-bad); }
         
-        /* Proportionately handle subtext dimensions via scale multipliers */
         .card-country { font-weight: 800; margin: 0; color: var(--text-main); letter-spacing: -0.03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: calc(18px * var(--scale-mult)); }
         .card-time { font-weight: 900; margin: 0; color: var(--text-main); font-variant-numeric: tabular-nums; letter-spacing: -0.04em; line-height: 1; font-size: calc(24px * var(--scale-mult)); }
         
@@ -464,6 +480,30 @@ export default function App() {
         .btn-clear-logs-action { background: none; border: none; font-size: 12px; font-weight: 700; color: #EF4444; cursor: pointer; padding: 4px 6px; border-radius: 4px; transition: background 0.2s; }
         .btn-clear-logs-action:hover { background: #FEF2F2; }
 
+        /* Fixed Right Sidebar Flow Guidelines Container Style */
+        .flow-sidebar { width: 300px; min-width: 300px; background-color: var(--bg-drawer); border-left: 1px solid var(--border); display: flex; flex-direction: column; padding: 24px 20px; box-sizing: border-box; box-shadow: -4px 0 24px rgba(15, 23, 42, 0.02); height: 100vh; z-index: 10; }
+        .flow-title { margin: 0 0 20px 0; font-size: 18px; font-weight: 800; color: var(--text-main); letter-spacing: -0.02em; display: flex; align-items: center; gap: 8px; }
+        .flow-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px; }
+        
+        /* Flow checklist sequence card item container */
+        .flow-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; background: #F8FAFC; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all 0.2s ease; user-select: none; }
+        .flow-item:hover { background: #F1F5F9; border-color: #CBD5E1; }
+        .flow-item.done { background: #F0FDF4; border-color: #BBF7D0; }
+        
+        .flow-checkbox { width: 18px; height: 18px; border-radius: 4px; border: 2px solid #94A3B8; display: flex; align-items: center; justify-content: center; margin-top: 1px; flex-shrink: 0; background: #FFF; transition: all 0.15s; }
+        .flow-item.done .flow-checkbox { background: var(--color-good); border-color: var(--color-good); }
+        .flow-checkbox::after { content: '✓'; color: #FFF; font-size: 11px; font-weight: 900; display: none; }
+        .flow-item.done .flow-checkbox::after { display: block; }
+        
+        .flow-text-container { display: flex; flex-direction: column; gap: 2px; }
+        .flow-num { font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; }
+        .flow-item.done .flow-num { color: #15803D; opacity: 0.7; }
+        .flow-name { font-size: 13px; font-weight: 600; color: #334155; line-height: 1.4; }
+        .flow-item.done .flow-name { color: #166534; text-decoration: line-through; opacity: 0.7; }
+        
+        .btn-reset-flow { width: 100%; padding: 10px; background: #FFF; border: 1px solid var(--border); border-radius: 8px; color: var(--text-muted); font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; margin-top: 16px; }
+        .btn-reset-flow:hover { background: #F1F5F9; color: var(--text-main); border-color: #CBD5E1; }
+
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,23,42,0.4); display: flex; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(4px); animation: fadeIn 0.2s ease; }
         .modal-content { background: #FFF; width: 90%; max-width: 500px; max-height: 80vh; border-radius: 20px; box-shadow: var(--shadow-hover); display: flex; flex-direction: column; overflow: hidden; animation: slideUp 0.3s ease; }
         .modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
@@ -482,6 +522,7 @@ export default function App() {
       `}</style>
 
       <div className="layout">
+        {/* LEFT DRAWER DIRECTORY */}
         <div className={`drawer ${isDrawerOpen ? 'open' : 'closed'}`}>
           <div className="drawer-header">
             <h2 className="drawer-title">Global Directory</h2>
@@ -562,7 +603,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* Ref applied onto Canvas to track exact available heights live */}
+        {/* ACTIVE WORKSPACE CANVAS */}
         <div className="canvas" ref={canvasRef}>
           <div className="canvas-topbar">
             <button 
@@ -825,6 +866,37 @@ export default function App() {
               })}
             </div>
           )}
+        </div>
+
+        {/* FIXED RIGHT SIDEBAR - CALL FLOW GUIDELINES TRACKER */}
+        <div className="flow-sidebar">
+          <h2 className="flow-title">
+            📋 Call Flow Guide
+          </h2>
+          <div className="flow-scroll">
+            {callFlowSteps.map((step, index) => {
+              const isDone = completedSteps.includes(step);
+              return (
+                <div 
+                  key={step} 
+                  className={`flow-item ${isDone ? 'done' : ''}`}
+                  onClick={() => toggleStep(step)}
+                >
+                  <div className="flow-checkbox"></div>
+                  <div className="flow-text-container">
+                    <span className="flow-num">Stage {String(index + 1).padStart(2, '0')}</span>
+                    <span className="flow-name">{step}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <button 
+            className="btn-reset-flow"
+            onClick={() => setCompletedSteps([])}
+          >
+            Reset Progress
+          </button>
         </div>
 
         {/* LOG MODAL OVERLAY */}
