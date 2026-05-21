@@ -330,11 +330,15 @@ export default function App() {
         
         .grid { display: grid; gap: 16px; align-content: start; flex: 1; min-height: 0; width: 100%; box-sizing: border-box; }
         
-        /* Capped sizes for low volumes prevents stretching across the screen */
-        .grid[data-count="1"] { grid-template-columns: repeat(auto-fit, minmax(300px, 420px)); max-height: 500px; }
-        .grid[data-count="2"] { grid-template-columns: repeat(auto-fit, minmax(300px, 420px)); max-height: 500px; }
-        .grid[data-count="3"] { grid-template-columns: repeat(3, 1fr); max-height: 500px; }
-        .grid[data-count="4"] { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); height: calc(100vh - 140px); }
+        /* Fixed natural size rules up to 4 cards (no stretching out to cover total monitor widths) */
+        .grid[data-count="1"], 
+        .grid[data-count="2"], 
+        .grid[data-count="3"], 
+        .grid[data-count="4"] { 
+          grid-template-columns: repeat(auto-fill, minmax(320px, 360px)); 
+        }
+        
+        /* Dynamic scale configuration triggers strictly when 5 or more active dashboard tiles fill up the view */
         .grid[data-count="5"], .grid[data-count="6"] { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); height: calc(100vh - 140px); }
         .grid[data-count="7"], .grid[data-count="8"] { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(2, 1fr); height: calc(100vh - 140px); }
         .grid[data-count="9"], .grid[data-count="10"], .grid[data-count="11"], .grid[data-count="12"] { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(3, 1fr); height: calc(100vh - 140px); }
@@ -346,15 +350,16 @@ export default function App() {
         .card-soon::before { background: var(--grad-soon); }
         .card-bad::before { background: var(--grad-bad); }
         
-        .grid[data-count="1"] .card-country, .grid[data-count="2"] .card-country, .grid[data-count="3"] .card-country { font-size: 20px; }
-        .grid[data-count="1"] .card-time, .grid[data-count="2"] .card-time, .grid[data-count="3"] .card-time { font-size: 26px; }
+        .grid[data-count="1"] .card-country, .grid[data-count="2"] .card-country, .grid[data-count="3"] .card-country, .grid[data-count="4"] .card-country { font-size: 20px; }
+        .grid[data-count="1"] .card-time, .grid[data-count="2"] .card-time, .grid[data-count="3"] .card-time, .grid[data-count="4"] .card-time { font-size: 26px; }
         
-        .grid[data-count*="4"] .card-country, .grid[data-count*="5"] .card-country, .grid[data-count*="6"] .card-country, .grid[data-count*="7"] .card-country, .grid[data-count*="8"] .card-country, .grid[data-count*="9"] .card-country, .grid[data-count*="10"] .card-country, .grid[data-count*="11"] .card-country, .grid[data-count*="12"] .card-country { font-size: 16px; }
-        .grid[data-count*="4"] .card-time, .grid[data-count*="5"] .card-time, .grid[data-count*="6"] .card-time, .grid[data-count*="7"] .card-time, .grid[data-count*="8"] .card-time, .grid[data-count*="9"] .card-time, .grid[data-count*="10"] .card-time, .grid[data-count*="11"] .card-time, .grid[data-count*="12"] .card-time { font-size: 20px; }
-        .grid[data-count*="4"] .card-offset, .grid[data-count*="5"] .card-offset, .grid[data-count*="6"] .card-offset, .grid[data-count*="7"] .card-offset, .grid[data-count*="8"] .card-offset, .grid[data-count*="9"] .card-offset, .grid[data-count*="10"] .card-offset, .grid[data-count*="11"] .card-offset, .grid[data-count*="12"] .card-offset { font-size: 11px; }
-        .grid[data-count*="4"] .badge, .grid[data-count*="5"] .badge, .grid[data-count*="6"] .badge, .grid[data-count*="7"] .badge, .grid[data-count*="8"] .badge, .grid[data-count*="9"] .badge, .grid[data-count*="10"] .badge, .grid[data-count*="11"] .badge, .grid[data-count*="12"] .badge { font-size: 10px; padding: 4px 8px; }
-        .grid[data-count*="4"] .btn-toggle-converter, .grid[data-count*="5"] .btn-toggle-converter, .grid[data-count*="6"] .btn-toggle-converter, .grid[data-count*="7"] .btn-toggle-converter, .grid[data-count*="8"] .btn-toggle-converter, .grid[data-count*="9"] .btn-toggle-converter, .grid[data-count*="10"] .btn-toggle-converter, .grid[data-count*="11"] .btn-toggle-converter, .grid[data-count*="12"] .btn-toggle-converter { font-size: 11px; padding: 5px 10px; }
-        .grid[data-count*="4"] .btn-remove, .grid[data-count*="5"] .btn-remove, .grid[data-count*="6"] .btn-remove, .grid[data-count*="7"] .btn-remove, .grid[data-count*="8"] .btn-remove, .grid[data-count*="9"] .btn-remove, .grid[data-count*="10"] .btn-remove, .grid[data-count*="11"] .btn-remove, .grid[data-count*="12"] .btn-remove { font-size: 11px; padding: 8px; }
+        /* Font down-sizing limits activated explicitly under dense layouts (5+ tiles loaded) */
+        .grid[data-count="5"] .card-country, .grid[data-count="6"] .card-country, .grid[data-count="7"] .card-country, .grid[data-count="8"] .card-country, .grid[data-count="9"] .card-country, .grid[data-count="10"] .card-country, .grid[data-count="11"] .card-country, .grid[data-count="12"] .card-country { font-size: 15px; }
+        .grid[data-count="5"] .card-time, .grid[data-count="6"] .card-time, .grid[data-count="7"] .card-time, .grid[data-count="8"] .card-time, .grid[data-count="9"] .card-time, .grid[data-count="10"] .card-time, .grid[data-count="11"] .card-time, .grid[data-count="12"] .card-time { font-size: 20px; }
+        .grid[data-count="5"] .card-offset, .grid[data-count="6"] .card-offset, .grid[data-count="7"] .card-offset, .grid[data-count="8"] .card-offset, .grid[data-count="9"] .card-offset, .grid[data-count="10"] .card-offset, .grid[data-count="11"] .card-offset, .grid[data-count="12"] .card-offset { font-size: 11px; }
+        .grid[data-count="5"] .badge, .grid[data-count="6"] .badge, .grid[data-count="7"] .badge, .grid[data-count="8"] .badge, .grid[data-count="9"] .badge, .grid[data-count="10"] .badge, .grid[data-count="11"] .badge, .grid[data-count="12"] .badge { font-size: 10px; padding: 4px 8px; }
+        .grid[data-count="5"] .btn-toggle-converter, .grid[data-count="6"] .btn-toggle-converter, .grid[data-count="7"] .btn-toggle-converter, .grid[data-count="8"] .btn-toggle-converter, .grid[data-count="9"] .btn-toggle-converter, .grid[data-count="10"] .btn-toggle-converter, .grid[data-count="11"] .btn-toggle-converter, .grid[data-count="12"] .btn-toggle-converter { font-size: 11px; padding: 5px 10px; }
+        .grid[data-count="5"] .btn-remove, .grid[data-count="6"] .btn-remove, .grid[data-count="7"] .btn-remove, .grid[data-count="8"] .btn-remove, .grid[data-count="9"] .btn-remove, .grid[data-count="10"] .btn-remove, .grid[data-count="11"] .btn-remove, .grid[data-count="12"] .btn-remove { font-size: 11px; padding: 8px; }
 
         .card-main-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
         .card-country { font-weight: 800; margin: 0; color: var(--text-main); letter-spacing: -0.03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
