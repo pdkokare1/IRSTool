@@ -192,12 +192,12 @@ export default function App() {
     return processedCountries.filter(c => selectedCountries.includes(c.name));
   }, [processedCountries, selectedCountries]);
 
-  // Smart GDPR Logic: Check if any currently active canvas card is marked as an EU country
+  // Smart GDPR verification metric
   const isAnyActiveCountryEU = useMemo(() => {
     return activeTiles.some(country => country.isEU);
   }, [activeTiles]);
 
-  // Compute the Call Flow sequence list dynamically based on active card regulations
+  // Compute the Call Flow checklist items array dynamically with responsive numbered indicators
   const callFlowSteps = useMemo(() => {
     const baseSteps = [
       "Greet",
@@ -359,7 +359,7 @@ export default function App() {
 
         .drawer-header { padding: 24px 20px 16px; border-bottom: 1px solid var(--border); }
         
-        /* Centered Global Directory Text */
+        /* Centered Global Directory Typography Header */
         .drawer-title { margin: 0 0 16px 0; font-size: 20px; font-weight: 800; color: var(--text-main); letter-spacing: -0.03em; text-align: center; }
         
         .location-dropdown { width: 100%; padding: 10px 14px; font-size: 13px; font-weight: 600; color: var(--text-main); background-color: #F1F5F9; border: 1px solid transparent; border-radius: 8px; margin-bottom: 10px; cursor: pointer; outline: none; appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 14px center; background-size: 14px; transition: all 0.2s; }
@@ -372,7 +372,7 @@ export default function App() {
         
         .drawer-scroll { flex: 1; overflow-y: auto; padding: 16px 20px; }
         
-        /* Unified bottom section for drawer controls */
+        /* Drawer controls settings footer area layout block */
         .drawer-settings { padding: 16px 20px; background: #F8FAFC; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 14px; }
         .settings-title { font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 800; margin: 0; letter-spacing: 0.05em; text-align: center; }
         .settings-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
@@ -395,7 +395,7 @@ export default function App() {
         .selected .country-name { color: #065F46; }
         .time-preview { font-size: 12px; color: var(--text-muted); font-weight: 600; font-variant-numeric: tabular-nums; }
         
-        /* Floating Burger Button configuration */
+        /* Floating burger trigger button completely pulled out of baseline document layers */
         .burger-menu-btn { position: absolute; top: 20px; left: 20px; background: #FFFFFF; border: 1px solid var(--border); border-radius: 10px; width: 42px; height: 42px; cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px; box-shadow: var(--shadow-sm); transition: all 0.2s ease; outline: none; z-index: 20; }
         .burger-menu-btn:hover { border-color: var(--color-eu); background: #F8FAFC; transform: translateY(-1px); }
         .burger-menu-btn span { display: block; width: 20px; height: 2px; background: #475569; border-radius: 2px; transition: all 0.2s; }
@@ -403,8 +403,8 @@ export default function App() {
         .burger-menu-btn.open span:nth-child(2) { opacity: 0; }
         .burger-menu-btn.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
 
-        /* Canvas optimized with extra top indentation for floating burger trigger alignment */
-        .canvas { flex: 1; padding: 24px 32px; overflow-y: hidden; height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; position: relative; padding-top: 76px; }
+        /* Canvas optimized with extra top space allowing cards to shift high up into the right corner slots */
+        .canvas { flex: 1; padding: 20px 24px; overflow-y: hidden; height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; position: relative; padding-top: 76px; }
         .canvas-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); text-align: center; animation: fadeIn 0.5s ease-in-out; }
         .canvas-empty h2 { font-size: 24px; font-weight: 800; color: var(--text-main); margin-bottom: 8px; letter-spacing: -0.03em; }
         .canvas-empty p { font-size: 14px; max-width: 380px; line-height: 1.6; color: #64748B; margin: 0; }
@@ -454,7 +454,7 @@ export default function App() {
         .converter-panel { margin-bottom: calc(12px * var(--scale-mult)); padding: calc(12px * var(--scale-mult)); background-color: #F8FAFC; border-radius: calc(12px * var(--scale-mult)); border: 1px solid var(--border); animation: fadeIn 0.3s ease; overflow-y: auto; max-height: calc(170px * var(--scale-mult)); box-sizing: border-box; }
         .converter-panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         
-        /* Centered Respondent's Appointment Time Label */
+        /* Centered Respondent's Appointment Time Section Label */
         .converter-panel-header label { font-size: calc(10px * var(--scale-mult)); font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 0; text-align: center; flex: 1; }
         
         .btn-close { background: none; border: none; font-size: calc(16px * var(--scale-mult)); color: #94A3B8; cursor: pointer; line-height: 1; padding: 0; transition: color 0.2s; }
@@ -491,7 +491,7 @@ export default function App() {
         .btn-remove { width: 100%; background-color: #FFF; border: 1px solid var(--border); border-radius: 10px; color: var(--text-muted); font-weight: 700; cursor: pointer; transition: all 0.2s ease; margin-top: auto; font-size: calc(12px * var(--scale-mult)); padding: calc(10px * var(--scale-mult)); }
         .btn-remove:hover { background-color: #FEF2F2; color: #EF4444; border-color: #FECACA; }
 
-        /* Integrated View Logs styling for the Left Drawer panel */
+        /* Integrated View Logs button style at base footer area of left directory drawer */
         .btn-view-logs { background-color: #FFFFFF; border: 1px solid var(--border); padding: 12px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: var(--shadow-sm); transition: all 0.2s; width: 100%; margin-top: 4px; box-sizing: border-box; }
         .btn-view-logs:hover { border-color: var(--color-eu); background-color: #EFF6FF; color: var(--color-eu); }
         
