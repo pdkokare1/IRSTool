@@ -197,14 +197,13 @@ export default function App() {
     return activeTiles.some(country => country.isEU);
   }, [activeTiles]);
 
-  // Compute the Call Flow checklist items array dynamically with responsive numbered indicators
+  // Compute the Call Flow steps array dynamically with Call Monitoring & Right to Privacy combined
   const callFlowSteps = useMemo(() => {
     const baseSteps = [
       "Greet",
       "Introduce",
       "Explain Purpose",
-      "Monitoring Disclaimer",
-      "Right to Privacy Disclaimer",
+      "Call Monitoring & Right to Privacy Disclaimer",
       "E-Mail Confirmation",
       "Survey"
     ];
@@ -404,7 +403,6 @@ export default function App() {
         .canvas-empty h2 { font-size: 24px; font-weight: 800; color: var(--text-main); margin-bottom: 8px; letter-spacing: -0.03em; }
         .canvas-empty p { font-size: 14px; max-width: 380px; line-height: 1.6; color: #64748B; margin: 0; }
         
-        /* Symmetric 3-column-max auto-fit grid framework with centered layout margins */
         .grid { 
           display: grid; 
           grid-template-columns: repeat(auto-fit, minmax(calc(320px * var(--scale-mult)), 1fr)); 
@@ -455,9 +453,7 @@ export default function App() {
         .card-soon::before { background: var(--grad-soon); }
         .card-bad::before { background: var(--grad-bad); }
         
-        /* Fixed horizontal space-between layout alignments across the primary card status header row */
         .card-main-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; width: 100%; box-sizing: border-box; }
-        
         .card-country { font-weight: 800; margin: 0; color: var(--text-main); letter-spacing: -0.03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: calc(18px * var(--scale-mult)); }
         .card-time { font-weight: 900; margin: 0; color: var(--text-main); font-variant-numeric: tabular-nums; letter-spacing: -0.04em; line-height: 1; font-size: calc(24px * var(--scale-mult)); }
         
@@ -521,9 +517,7 @@ export default function App() {
         .btn-clear-logs-action:hover { background: #FEF2F2; }
 
         .flow-sidebar { width: 300px; min-width: 300px; background-color: var(--bg-drawer); border-left: 1px solid var(--border); display: flex; flex-direction: column; padding: 24px 20px; box-sizing: border-box; box-shadow: -4px 0 24px rgba(15, 23, 42, 0.02); height: 100vh; z-index: 10; }
-        
         .flow-title { margin: 0 0 20px 0; font-size: 18px; font-weight: 800; color: var(--text-main); letter-spacing: -0.02em; text-align: center; justify-content: center; display: flex; }
-        
         .flow-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px; }
         
         .flow-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; background: #F8FAFC; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all 0.2s ease; user-select: none; }
@@ -536,6 +530,8 @@ export default function App() {
         .flow-item.done .flow-checkbox::after { display: block; }
         
         .flow-text-container { display: flex; flex-direction: column; gap: 2px; }
+        
+        /* Updated typography prefix tag metadata tracking from stage down to step rules safely */
         .flow-num { font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; }
         .flow-item.done .flow-num { color: #15803D; opacity: 0.7; }
         .flow-name { font-size: 13px; font-weight: 600; color: #334155; line-height: 1.4; }
@@ -925,7 +921,8 @@ export default function App() {
                 >
                   <div className="flow-checkbox"></div>
                   <div className="flow-text-container">
-                    <span className="flow-num">Stage {String(index + 1).padStart(2, '0')}</span>
+                    {/* Prefix labels updated dynamically from Stage to Step */}
+                    <span className="flow-num">Step {String(index + 1).padStart(2, '0')}</span>
                     <span className="flow-name">{step}</span>
                   </div>
                 </div>
