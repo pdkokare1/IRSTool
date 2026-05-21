@@ -640,7 +640,7 @@ export default function App() {
             </div>
             
             <button className="btn-view-logs" onClick={() => setIsLogModalOpen(true)}>
-              📁 View Appointment Logs {appointmentLogs.length > 0 && `(${appointmentLogs.length})`}
+              View Appointment Logs {appointmentLogs.length > 0 && `(${appointmentLogs.length})`}
             </button>
           </div>
         </div>
