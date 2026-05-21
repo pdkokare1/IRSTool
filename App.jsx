@@ -358,7 +358,6 @@ export default function App() {
         .drawer.closed { transform: translateX(-100%); margin-left: -340px; }
 
         .drawer-header { padding: 24px 20px 16px; border-bottom: 1px solid var(--border); }
-        
         .drawer-title { margin: 0 0 16px 0; font-size: 20px; font-weight: 800; color: var(--text-main); letter-spacing: -0.03em; text-align: center; }
         
         .location-dropdown { width: 100%; padding: 10px 14px; font-size: 13px; font-weight: 600; color: var(--text-main); background-color: #F1F5F9; border: 1px solid transparent; border-radius: 8px; margin-bottom: 10px; cursor: pointer; outline: none; appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 14px center; background-size: 14px; transition: all 0.2s; }
@@ -405,7 +404,7 @@ export default function App() {
         .canvas-empty h2 { font-size: 24px; font-weight: 800; color: var(--text-main); margin-bottom: 8px; letter-spacing: -0.03em; }
         .canvas-empty p { font-size: 14px; max-width: 380px; line-height: 1.6; color: #64748B; margin: 0; }
         
-        /* Fixed Symmetric 3-column-max auto-fit grid framework with centered layout margins */
+        /* Symmetric 3-column-max auto-fit grid framework with centered layout margins */
         .grid { 
           display: grid; 
           grid-template-columns: repeat(auto-fit, minmax(calc(320px * var(--scale-mult)), 1fr)); 
@@ -418,14 +417,12 @@ export default function App() {
           flex: 1; 
         }
         
-        /* Enforce a maximum boundary limit of exactly 3 columns across wide desktop displays */
         @media (min-width: 1024px) {
           .grid {
             grid-template-columns: repeat(3, 1fr);
           }
         }
         
-        /* Gracefully prevent low card volumes from expanding past standard proportions */
         .grid:has(> :nth-child(1):last-child) {
           grid-template-columns: minmax(calc(320px * var(--scale-mult)), 360px);
           justify-content: center;
@@ -458,6 +455,9 @@ export default function App() {
         .card-soon::before { background: var(--grad-soon); }
         .card-bad::before { background: var(--grad-bad); }
         
+        /* Fixed horizontal space-between layout alignments across the primary card status header row */
+        .card-main-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; width: 100%; box-sizing: border-box; }
+        
         .card-country { font-weight: 800; margin: 0; color: var(--text-main); letter-spacing: -0.03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: calc(18px * var(--scale-mult)); }
         .card-time { font-weight: 900; margin: 0; color: var(--text-main); font-variant-numeric: tabular-nums; letter-spacing: -0.04em; line-height: 1; font-size: calc(24px * var(--scale-mult)); }
         
@@ -477,9 +477,7 @@ export default function App() {
         
         .converter-panel { margin-bottom: calc(12px * var(--scale-mult)); padding: calc(12px * var(--scale-mult)); background-color: #F8FAFC; border-radius: calc(12px * var(--scale-mult)); border: 1px solid var(--border); animation: fadeIn 0.3s ease; overflow-y: auto; max-height: calc(170px * var(--scale-mult)); box-sizing: border-box; }
         .converter-panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        
         .converter-panel-header label { font-size: calc(10px * var(--scale-mult)); font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 0; text-align: center; flex: 1; }
-        
         .btn-close { background: none; border: none; font-size: calc(16px * var(--scale-mult)); color: #94A3B8; cursor: pointer; line-height: 1; padding: 0; transition: color 0.2s; }
         .btn-close:hover { color: #0F172A; }
 
@@ -854,7 +852,7 @@ export default function App() {
                                 >AM</button>
                                 <button 
                                   className={`ampm-btn ${isPM ? 'active' : ''}`} 
-                                  onChange={() => handleTimePartChange('ampm', 'PM')}
+                                  onClick={() => handleTimePartChange('ampm', 'PM')}
                                 >PM</button>
                               </div>
                             </div>
