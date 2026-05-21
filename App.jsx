@@ -30,7 +30,7 @@ export default function App() {
   const [regionFilter, setRegionFilter] = useState("All"); 
   const [ticker, setTicker] = useState(Date.now());
   
-  // New state to manage the drawer visibility status
+  // State to manage the drawer visibility status
   const [isDrawerOpen, setIsDrawerOpen] = useState(true);
   
   const [associateLocation, setAssociateLocation] = useState(() => {
@@ -275,7 +275,6 @@ export default function App() {
         
         .layout { display: flex; height: 100vh; overflow: hidden; position: relative; width: 100vw; }
         
-        /* Drawer animation transitions built into open/closed status classes */
         .drawer { width: 340px; min-width: 340px; background-color: var(--bg-drawer); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 10; box-shadow: 4px 0 24px rgba(15, 23, 42, 0.03); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .drawer.open { transform: translateX(0); margin-left: 0; }
         .drawer.closed { transform: translateX(-100%); margin-left: -340px; }
@@ -315,10 +314,8 @@ export default function App() {
         .selected .country-name { color: #065F46; }
         .time-preview { font-size: 12px; color: var(--text-muted); font-weight: 600; font-variant-numeric: tabular-nums; }
         
-        /* Floating layout controls container at top of Canvas */
         .canvas-topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; min-height: 42px; position: relative; z-index: 6; }
         
-        /* Burger Menu Trigger Toggle Button Style */
         .burger-menu-btn { background: #FFFFFF; border: 1px solid var(--border); border-radius: 10px; width: 42px; height: 42px; cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px; box-shadow: var(--shadow-sm); transition: all 0.2s ease; outline: none; }
         .burger-menu-btn:hover { border-color: var(--color-eu); background: #F8FAFC; transform: translateY(-1px); }
         .burger-menu-btn span { display: block; width: 20px; height: 2px; background: #475569; border-radius: 2px; transition: all 0.2s; }
@@ -331,19 +328,17 @@ export default function App() {
         .canvas-empty h2 { font-size: 24px; font-weight: 800; color: var(--text-main); margin-bottom: 8px; letter-spacing: -0.03em; }
         .canvas-empty p { font-size: 14px; max-width: 380px; line-height: 1.6; color: #64748B; margin: 0; }
         
-        /* Fully Viewport Adaptive Scale Grid Container */
-        .grid { display: grid; gap: 16px; align-content: stretch; flex: 1; min-height: 0; width: 100%; box-sizing: border-box; }
+        .grid { display: grid; gap: 16px; align-content: start; flex: 1; min-height: 0; width: 100%; box-sizing: border-box; }
         
-        /* Adaptive Multi-column structure matching the volume of active country cards */
-        .grid[data-count="1"] { grid-template-columns: 1fr; max-height: 500px; }
-        .grid[data-count="2"] { grid-template-columns: repeat(2, 1fr); max-height: 500px; }
+        /* Capped sizes for low volumes prevents stretching across the screen */
+        .grid[data-count="1"] { grid-template-columns: repeat(auto-fit, minmax(300px, 420px)); max-height: 500px; }
+        .grid[data-count="2"] { grid-template-columns: repeat(auto-fit, minmax(300px, 420px)); max-height: 500px; }
         .grid[data-count="3"] { grid-template-columns: repeat(3, 1fr); max-height: 500px; }
         .grid[data-count="4"] { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); height: calc(100vh - 140px); }
         .grid[data-count="5"], .grid[data-count="6"] { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); height: calc(100vh - 140px); }
         .grid[data-count="7"], .grid[data-count="8"] { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(2, 1fr); height: calc(100vh - 140px); }
         .grid[data-count="9"], .grid[data-count="10"], .grid[data-count="11"], .grid[data-count="12"] { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(3, 1fr); height: calc(100vh - 140px); }
         
-        /* Universal down-scale behavior rules for container card items */
         .card { background-color: #FFF; padding: 18px 20px; border-radius: 14px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: var(--shadow-card); border: 1px solid rgba(255,255,255,0.8); transition: all 0.2s ease-in-out; position: relative; animation: slideUp 0.3s ease-out; min-height: 0; box-sizing: border-box; overflow: hidden; }
         .card:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
         .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; }
@@ -351,11 +346,9 @@ export default function App() {
         .card-soon::before { background: var(--grad-soon); }
         .card-bad::before { background: var(--grad-bad); }
         
-        /* Dynamic scale factor rules applied depending on user density volumes */
         .grid[data-count="1"] .card-country, .grid[data-count="2"] .card-country, .grid[data-count="3"] .card-country { font-size: 20px; }
         .grid[data-count="1"] .card-time, .grid[data-count="2"] .card-time, .grid[data-count="3"] .card-time { font-size: 26px; }
         
-        /* Scaled down font sizing parameters triggered automatically for >3 cards counts */
         .grid[data-count*="4"] .card-country, .grid[data-count*="5"] .card-country, .grid[data-count*="6"] .card-country, .grid[data-count*="7"] .card-country, .grid[data-count*="8"] .card-country, .grid[data-count*="9"] .card-country, .grid[data-count*="10"] .card-country, .grid[data-count*="11"] .card-country, .grid[data-count*="12"] .card-country { font-size: 16px; }
         .grid[data-count*="4"] .card-time, .grid[data-count*="5"] .card-time, .grid[data-count*="6"] .card-time, .grid[data-count*="7"] .card-time, .grid[data-count*="8"] .card-time, .grid[data-count*="9"] .card-time, .grid[data-count*="10"] .card-time, .grid[data-count*="11"] .card-time, .grid[data-count*="12"] .card-time { font-size: 20px; }
         .grid[data-count*="4"] .card-offset, .grid[data-count*="5"] .card-offset, .grid[data-count*="6"] .card-offset, .grid[data-count*="7"] .card-offset, .grid[data-count*="8"] .card-offset, .grid[data-count*="9"] .card-offset, .grid[data-count*="10"] .card-offset, .grid[data-count*="11"] .card-offset, .grid[data-count*="12"] .card-offset { font-size: 11px; }
@@ -381,7 +374,6 @@ export default function App() {
         .btn-toggle-converter { background-color: #F8FAFC; color: #475569; border: 1px solid var(--border); padding: 6px 12px; border-radius: 100px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; }
         .btn-toggle-converter:hover { background-color: #E2E8F0; color: #0F172A; }
         
-        /* Isolated structural scroll containment bounds on layout converter subpanel */
         .converter-panel { margin-bottom: 12px; padding: 12px; background-color: #F8FAFC; border-radius: 12px; border: 1px solid var(--border); animation: fadeIn 0.3s ease; overflow-y: auto; max-height: 180px; box-sizing: border-box; }
         .converter-panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .converter-panel-header label { font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 0; }
@@ -444,7 +436,6 @@ export default function App() {
       `}</style>
 
       <div className="layout">
-        {/* LEFT DRAWER - Supports .open / .closed status toggling dynamically */}
         <div className={`drawer ${isDrawerOpen ? 'open' : 'closed'}`}>
           <div className="drawer-header">
             <h2 className="drawer-title">Global Directory</h2>
@@ -525,10 +516,8 @@ export default function App() {
           </div>
         </div>
 
-        {/* RIGHT CANVAS CONTAINER */}
         <div className="canvas">
           <div className="canvas-topbar">
-            {/* Custom Burger Menu Toggle Button */}
             <button 
               className={`burger-menu-btn ${isDrawerOpen ? 'open' : ''}`}
               onClick={() => setIsDrawerOpen(!isDrawerOpen)}
@@ -550,7 +539,6 @@ export default function App() {
               <p>Select targets from the directory on the left to pin them to your active calling dashboard.</p>
             </div>
           ) : (
-            /* Pass dynamic tile length attribute to control layout sizing via CSS selectors */
             <div className="grid" data-count={activeTiles.length}>
               {activeTiles.map((country) => {
                 let cardClass = 'card-bad';
