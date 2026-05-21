@@ -76,19 +76,6 @@ export default function App() {
     'UK': 'United Kingdom'
   };
 
-  // Structured step guideline checklist array configurations
-  const callFlowSteps = [
-    "Greet",
-    "Introduce",
-    "Explain Purpose",
-    "Monitoring Disclaimer",
-    "Right to Privacy Disclaimer",
-    "E-Mail Confirmation",
-    "Survey",
-    "Closing Privacy Disclaimer",
-    "Thanks and Regards"
-  ];
-
   useEffect(() => localStorage.setItem('associateLoc_v2', associateLocation), [associateLocation]);
   useEffect(() => localStorage.setItem('selectedCountries', JSON.stringify(selectedCountries)), [selectedCountries]);
   useEffect(() => localStorage.setItem('appointmentLogs', JSON.stringify(appointmentLogs)), [appointmentLogs]);
@@ -204,6 +191,31 @@ export default function App() {
   const activeTiles = useMemo(() => {
     return processedCountries.filter(c => selectedCountries.includes(c.name));
   }, [processedCountries, selectedCountries]);
+
+  // Smart GDPR Logic: Check if any currently active canvas card is marked as an EU country
+  const isAnyActiveCountryEU = useMemo(() => {
+    return activeTiles.some(country => country.isEU);
+  }, [activeTiles]);
+
+  // Compute the Call Flow sequence list dynamically based on active card regulations
+  const callFlowSteps = useMemo(() => {
+    const baseSteps = [
+      "Greet",
+      "Introduce",
+      "Explain Purpose",
+      "Monitoring Disclaimer",
+      "Right to Privacy Disclaimer",
+      "E-Mail Confirmation",
+      "Survey"
+    ];
+
+    if (isAnyActiveCountryEU) {
+      baseSteps.push("Closing Privacy Disclaimer");
+    }
+
+    baseSteps.push("Thanks and Regards");
+    return baseSteps;
+  }, [isAnyActiveCountryEU]);
 
   const toggleCountry = (countryName) => {
     if (selectedCountries.includes(countryName)) {
@@ -346,7 +358,9 @@ export default function App() {
         .drawer.closed { transform: translateX(-100%); margin-left: -340px; }
 
         .drawer-header { padding: 24px 20px 16px; border-bottom: 1px solid var(--border); }
-        .drawer-title { margin: 0 0 16px 0; font-size: 20px; font-weight: 800; color: var(--text-main); letter-spacing: -0.03em; }
+        
+        /* Centered Global Directory Text */
+        .drawer-title { margin: 0 0 16px 0; font-size: 20px; font-weight: 800; color: var(--text-main); letter-spacing: -0.03em; text-align: center; }
         
         .location-dropdown { width: 100%; padding: 10px 14px; font-size: 13px; font-weight: 600; color: var(--text-main); background-color: #F1F5F9; border: 1px solid transparent; border-radius: 8px; margin-bottom: 10px; cursor: pointer; outline: none; appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 14px center; background-size: 14px; transition: all 0.2s; }
         .location-dropdown:hover { background-color: #E2E8F0; }
@@ -358,8 +372,9 @@ export default function App() {
         
         .drawer-scroll { flex: 1; overflow-y: auto; padding: 16px 20px; }
         
-        .drawer-settings { padding: 16px 20px; background: #F8FAFC; border-top: 1px solid var(--border); }
-        .settings-title { font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 800; margin: 0 0 10px 0; letter-spacing: 0.05em; }
+        /* Unified bottom section for drawer controls */
+        .drawer-settings { padding: 16px 20px; background: #F8FAFC; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 14px; }
+        .settings-title { font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 800; margin: 0; letter-spacing: 0.05em; text-align: center; }
         .settings-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
         .settings-select { padding: 6px; border-radius: 6px; border: 1px solid var(--border); font-size: 12px; font-weight: 600; color: var(--text-main); outline: none; cursor: pointer; flex: 1; text-align: center; }
         .settings-select:focus { border-color: var(--color-eu); }
@@ -380,16 +395,16 @@ export default function App() {
         .selected .country-name { color: #065F46; }
         .time-preview { font-size: 12px; color: var(--text-muted); font-weight: 600; font-variant-numeric: tabular-nums; }
         
-        .canvas-topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; min-height: 42px; position: relative; z-index: 6; }
-        
-        .burger-menu-btn { background: #FFFFFF; border: 1px solid var(--border); border-radius: 10px; width: 42px; height: 42px; cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px; box-shadow: var(--shadow-sm); transition: all 0.2s ease; outline: none; }
+        /* Floating Burger Button configuration */
+        .burger-menu-btn { position: absolute; top: 20px; left: 20px; background: #FFFFFF; border: 1px solid var(--border); border-radius: 10px; width: 42px; height: 42px; cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px; box-shadow: var(--shadow-sm); transition: all 0.2s ease; outline: none; z-index: 20; }
         .burger-menu-btn:hover { border-color: var(--color-eu); background: #F8FAFC; transform: translateY(-1px); }
         .burger-menu-btn span { display: block; width: 20px; height: 2px; background: #475569; border-radius: 2px; transition: all 0.2s; }
         .burger-menu-btn.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
         .burger-menu-btn.open span:nth-child(2) { opacity: 0; }
         .burger-menu-btn.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
 
-        .canvas { flex: 1; padding: 32px 40px; overflow-y: hidden; height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; position: relative; }
+        /* Canvas optimized with extra top indentation for floating burger trigger alignment */
+        .canvas { flex: 1; padding: 24px 32px; overflow-y: hidden; height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; position: relative; padding-top: 76px; }
         .canvas-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); text-align: center; animation: fadeIn 0.5s ease-in-out; }
         .canvas-empty h2 { font-size: 24px; font-weight: 800; color: var(--text-main); margin-bottom: 8px; letter-spacing: -0.03em; }
         .canvas-empty p { font-size: 14px; max-width: 380px; line-height: 1.6; color: #64748B; margin: 0; }
@@ -438,7 +453,10 @@ export default function App() {
         
         .converter-panel { margin-bottom: calc(12px * var(--scale-mult)); padding: calc(12px * var(--scale-mult)); background-color: #F8FAFC; border-radius: calc(12px * var(--scale-mult)); border: 1px solid var(--border); animation: fadeIn 0.3s ease; overflow-y: auto; max-height: calc(170px * var(--scale-mult)); box-sizing: border-box; }
         .converter-panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .converter-panel-header label { font-size: calc(10px * var(--scale-mult)); font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 0; }
+        
+        /* Centered Respondent's Appointment Time Label */
+        .converter-panel-header label { font-size: calc(10px * var(--scale-mult)); font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 0; text-align: center; flex: 1; }
+        
         .btn-close { background: none; border: none; font-size: calc(16px * var(--scale-mult)); color: #94A3B8; cursor: pointer; line-height: 1; padding: 0; transition: color 0.2s; }
         .btn-close:hover { color: #0F172A; }
 
@@ -473,19 +491,22 @@ export default function App() {
         .btn-remove { width: 100%; background-color: #FFF; border: 1px solid var(--border); border-radius: 10px; color: var(--text-muted); font-weight: 700; cursor: pointer; transition: all 0.2s ease; margin-top: auto; font-size: calc(12px * var(--scale-mult)); padding: calc(10px * var(--scale-mult)); }
         .btn-remove:hover { background-color: #FEF2F2; color: #EF4444; border-color: #FECACA; }
 
-        .btn-view-logs { background-color: #FFF; border: 1px solid var(--border); padding: 10px 16px; border-radius: 100px; font-size: 13px; font-weight: 700; color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: var(--shadow-sm); transition: all 0.2s; }
-        .btn-view-logs:hover { box-shadow: var(--shadow-hover); transform: translateY(-1px); border-color: var(--color-eu); }
+        /* Integrated View Logs styling for the Left Drawer panel */
+        .btn-view-logs { background-color: #FFFFFF; border: 1px solid var(--border); padding: 12px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: var(--shadow-sm); transition: all 0.2s; width: 100%; margin-top: 4px; box-sizing: border-box; }
+        .btn-view-logs:hover { border-color: var(--color-eu); background-color: #EFF6FF; color: var(--color-eu); }
+        
         .btn-save-log { margin-top: 8px; width: 100%; padding: 8px; border-radius: 8px; font-size: 11px; font-weight: 700; background-color: #EFF6FF; color: var(--color-eu); border: 1px solid rgba(59, 130, 246, 0.2); cursor: pointer; transition: all 0.2s; }
         .btn-save-log:hover { background-color: var(--color-eu); color: #FFF; }
         .btn-clear-logs-action { background: none; border: none; font-size: 12px; font-weight: 700; color: #EF4444; cursor: pointer; padding: 4px 6px; border-radius: 4px; transition: background 0.2s; }
         .btn-clear-logs-action:hover { background: #FEF2F2; }
 
-        /* Fixed Right Sidebar Flow Guidelines Container Style */
         .flow-sidebar { width: 300px; min-width: 300px; background-color: var(--bg-drawer); border-left: 1px solid var(--border); display: flex; flex-direction: column; padding: 24px 20px; box-sizing: border-box; box-shadow: -4px 0 24px rgba(15, 23, 42, 0.02); height: 100vh; z-index: 10; }
-        .flow-title { margin: 0 0 20px 0; font-size: 18px; font-weight: 800; color: var(--text-main); letter-spacing: -0.02em; display: flex; align-items: center; gap: 8px; }
+        
+        /* Centered Call Flow Guide text with emoji removed */
+        .flow-title { margin: 0 0 20px 0; font-size: 18px; font-weight: 800; color: var(--text-main); letter-spacing: -0.02em; text-align: center; justify-content: center; display: flex; }
+        
         .flow-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px; }
         
-        /* Flow checklist sequence card item container */
         .flow-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; background: #F8FAFC; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all 0.2s ease; user-select: none; }
         .flow-item:hover { background: #F1F5F9; border-color: #CBD5E1; }
         .flow-item.done { background: #F0FDF4; border-color: #BBF7D0; }
@@ -574,53 +595,55 @@ export default function App() {
             )}
           </div>
 
+          {/* Integrated View Logs section inside the operational settings block */}
           <div className="drawer-settings">
-            <h3 className="settings-title">Target Business Hours</h3>
-            <div className="settings-row">
-              <select 
-                className="settings-select" 
-                value={callWindowStart} 
-                onChange={(e) => setCallWindowStart(parseInt(e.target.value))}
-              >
-                <option value={7}>07:00 AM</option>
-                <option value={8}>08:00 AM</option>
-                <option value={9}>09:00 AM</option>
-                <option value={10}>10:00 AM</option>
-              </select>
-              <span className="settings-label">to</span>
-              <select 
-                className="settings-select" 
-                value={callWindowEnd} 
-                onChange={(e) => setCallWindowEnd(parseInt(e.target.value))}
-              >
-                <option value={15}>03:00 PM</option>
-                <option value={16}>04:00 PM</option>
-                <option value={17}>05:00 PM</option>
-                <option value={18}>06:00 PM</option>
-                <option value={19}>07:00 PM</option>
-              </select>
+            <div>
+              <h3 className="settings-title" style={{ marginBottom: '10px' }}>Target Business Hours</h3>
+              <div className="settings-row">
+                <select 
+                  className="settings-select" 
+                  value={callWindowStart} 
+                  onChange={(e) => setCallWindowStart(parseInt(e.target.value))}
+                >
+                  <option value={7}>07:00 AM</option>
+                  <option value={8}>08:00 AM</option>
+                  <option value={9}>09:00 AM</option>
+                  <option value={10}>10:00 AM</option>
+                </select>
+                <span className="settings-label">to</span>
+                <select 
+                  className="settings-select" 
+                  value={callWindowEnd} 
+                  onChange={(e) => setCallWindowEnd(parseInt(e.target.value))}
+                >
+                  <option value={15}>03:00 PM</option>
+                  <option value={16}>04:00 PM</option>
+                  <option value={17}>05:00 PM</option>
+                  <option value={18}>06:00 PM</option>
+                  <option value={19}>07:00 PM</option>
+                </select>
+              </div>
             </div>
+            
+            <button className="btn-view-logs" onClick={() => setIsLogModalOpen(true)}>
+              📁 View Appointment Logs {appointmentLogs.length > 0 && `(${appointmentLogs.length})`}
+            </button>
           </div>
         </div>
 
+        {/* Floating Burger Trigger placed completely separate from content layout mapping grids */}
+        <button 
+          className={`burger-menu-btn ${isDrawerOpen ? 'open' : ''}`}
+          onClick={() => setIsDrawerOpen(!isDrawerOpen)}
+          title={isDrawerOpen ? "Hide Directory" : "Show Directory"}
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+
         {/* ACTIVE WORKSPACE CANVAS */}
         <div className="canvas" ref={canvasRef}>
-          <div className="canvas-topbar">
-            <button 
-              className={`burger-menu-btn ${isDrawerOpen ? 'open' : ''}`}
-              onClick={() => setIsDrawerOpen(!isDrawerOpen)}
-              title={isDrawerOpen ? "Hide Directory" : "Show Directory"}
-            >
-              <span></span>
-              <span></span>
-              <span></span>
-            </button>
-
-            <button className="btn-view-logs" onClick={() => setIsLogModalOpen(true)}>
-              View Logs {appointmentLogs.length > 0 && `(${appointmentLogs.length})`}
-            </button>
-          </div>
-
           {selectedCountries.length === 0 ? (
             <div className="canvas-empty">
               <h2>Your Workspace is Empty</h2>
@@ -871,7 +894,7 @@ export default function App() {
         {/* FIXED RIGHT SIDEBAR - CALL FLOW GUIDELINES TRACKER */}
         <div className="flow-sidebar">
           <h2 className="flow-title">
-            📋 Call Flow Guide
+            Call Flow Guide
           </h2>
           <div className="flow-scroll">
             {callFlowSteps.map((step, index) => {
