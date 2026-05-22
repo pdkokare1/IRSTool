@@ -25,6 +25,18 @@ const getTzOffsetMins = (dateObj, timeZone) => {
   }
 };
 
+// Default fallback script guide mappings for each step option
+const defaultScripts = {
+  "Greet": "Hello, good day! May I please speak with [Respondent Name]?",
+  "Introduce": "My name is [Your Name] calling on behalf of IRS Research. I hope you are having a productive week.",
+  "Explain Purpose": "We are conducting a brief research study regarding global market trends and technology distributions, and your perspectives would be highly valuable.",
+  "Call Monitoring & Right to Privacy Disclaimer": "Before we begin, please note that this call may be monitored or recorded for quality and training purposes. You have the right to object or opt-out at any point.",
+  "E-Mail Confirmation": "Could you kindly verify or provide the best email address where we can send the study summary confirmation documents?",
+  "Survey": "Great, thank you. Let's move into our first milestone item: How would you evaluate your team's operational adaptation timeline?",
+  "Closing Privacy Disclaimer": "As a respondent located within the regulated zone, please note your personal records are securely managed under our localized data rights compliance policies. You can request erasure at any time.",
+  "Thanks and Regards": "Thank you so much for your time and premium insights today. Have an excellent rest of your day ahead! Goodbye."
+};
+
 export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [regionFilter, setRegionFilter] = useState("All"); 
@@ -39,6 +51,13 @@ export default function App() {
 
   // Call Flow checklist progress trackers state 
   const [completedSteps, setCompletedSteps] = useState([]);
+
+  // Call Flow Expandable state trackers & Custom Script templates state
+  const [expandedSteps, setExpandedSteps] = useState([]);
+  const [customScripts, setCustomScripts] = useState(() => {
+    const saved = localStorage.getItem('callFlowScripts_v1');
+    return saved ? JSON.parse(saved) : defaultScripts;
+  });
 
   const [associateLocation, setAssociateLocation] = useState(() => {
     return localStorage.getItem('associateLoc_v2') || 'IN';
@@ -81,6 +100,7 @@ export default function App() {
   useEffect(() => localStorage.setItem('appointmentLogs', JSON.stringify(appointmentLogs)), [appointmentLogs]);
   useEffect(() => localStorage.setItem('callWindowStart', callWindowStart.toString()), [callWindowStart]);
   useEffect(() => localStorage.setItem('callWindowEnd', callWindowEnd.toString()), [callWindowEnd]);
+  useEffect(() => localStorage.setItem('callFlowScripts_v1', JSON.stringify(customScripts)), [customScripts]);
 
   useEffect(() => {
     const interval = setInterval(() => setTicker(Date.now()), 60000);
@@ -230,6 +250,22 @@ export default function App() {
     } else {
       setCompletedSteps([...completedSteps, stepName]);
     }
+  };
+
+  const toggleExpandStep = (stepName, e) => {
+    e.stopPropagation(); // Avoid ticking checkbox state when clicking arrow container
+    if (expandedSteps.includes(stepName)) {
+      setExpandedSteps(expandedSteps.filter(s => s !== stepName));
+    } else {
+      setExpandedSteps([...expandedSteps, stepName]);
+    }
+  };
+
+  const handleScriptEdit = (stepName, val) => {
+    setCustomScripts(prev => ({
+      ...prev,
+      [stepName]: val
+    }));
   };
 
   const toggleConverter = (countryName) => {
@@ -516,27 +552,40 @@ export default function App() {
         .btn-clear-logs-action { background: none; border: none; font-size: 12px; font-weight: 700; color: #EF4444; cursor: pointer; padding: 4px 6px; border-radius: 4px; transition: background 0.2s; }
         .btn-clear-logs-action:hover { background: #FEF2F2; }
 
-        .flow-sidebar { width: 300px; min-width: 300px; background-color: var(--bg-drawer); border-left: 1px solid var(--border); display: flex; flex-direction: column; padding: 24px 20px; box-sizing: border-box; box-shadow: -4px 0 24px rgba(15, 23, 42, 0.02); height: 100vh; z-index: 10; }
+        .flow-sidebar { width: 340px; min-width: 340px; background-color: var(--bg-drawer); border-left: 1px solid var(--border); display: flex; flex-direction: column; padding: 24px 16px; box-sizing: border-box; box-shadow: -4px 0 24px rgba(15, 23, 42, 0.02); height: 100vh; z-index: 10; }
         .flow-title { margin: 0 0 20px 0; font-size: 18px; font-weight: 800; color: var(--text-main); letter-spacing: -0.02em; text-align: center; justify-content: center; display: flex; }
-        .flow-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px; }
+        .flow-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 4px; }
         
-        .flow-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; background: #F8FAFC; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all 0.2s ease; user-select: none; }
+        .flow-item { display: flex; flex-direction: column; padding: 12px; background: #F8FAFC; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all 0.2s ease; user-select: none; }
         .flow-item:hover { background: #F1F5F9; border-color: #CBD5E1; }
         .flow-item.done { background: #F0FDF4; border-color: #BBF7D0; }
+        
+        .flow-row-top { display: flex; align-items: flex-start; gap: 10px; width: 100%; position: relative; }
         
         .flow-checkbox { width: 18px; height: 18px; border-radius: 4px; border: 2px solid #94A3B8; display: flex; align-items: center; justify-content: center; margin-top: 1px; flex-shrink: 0; background: #FFF; transition: all 0.15s; }
         .flow-item.done .flow-checkbox { background: var(--color-good); border-color: var(--color-good); }
         .flow-checkbox::after { content: '✓'; color: #FFF; font-size: 11px; font-weight: 900; display: none; }
         .flow-item.done .flow-checkbox::after { display: block; }
         
-        .flow-text-container { display: flex; flex-direction: column; gap: 2px; }
+        .flow-text-container { display: flex; flex-direction: column; gap: 2px; flex: 1; padding-right: 24px; }
         
-        /* Updated typography prefix tag metadata tracking from stage down to step rules safely */
         .flow-num { font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; }
         .flow-item.done .flow-num { color: #15803D; opacity: 0.7; }
         .flow-name { font-size: 13px; font-weight: 600; color: #334155; line-height: 1.4; }
         .flow-item.done .flow-name { color: #166534; text-decoration: line-through; opacity: 0.7; }
         
+        .flow-expand-trigger { position: absolute; right: 0; top: 2px; background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; color: #94A3B8; font-size: 12px; font-weight: bold; transition: transform 0.2s, color 0.2s; border-radius: 4px; }
+        .flow-expand-trigger:hover { color: var(--color-eu); background: #E2E8F0; }
+        .flow-expand-trigger.rotated { transform: rotate(180deg); }
+
+        .flow-script-panel { margin-top: 10px; padding: 10px; background: #FFFFFF; border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; animation: fadeIn 0.2s ease; width: 100%; box-sizing: border-box; cursor: default; }
+        .flow-textarea { width: 100%; height: 75px; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 12px; color: var(--text-main); padding: 8px; box-sizing: border-box; resize: none; background: #F8FAFC; outline: none; transition: border-color 0.2s; }
+        .flow-textarea:focus { border-color: var(--color-eu); background: #FFF; }
+        
+        .flow-script-actions { display: flex; justify-content: flex-end; width: 100%; }
+        .btn-save-script { padding: 4px 10px; font-size: 11px; font-weight: 700; background: #EFF6FF; color: var(--color-eu); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 4px; cursor: pointer; transition: all 0.2s; }
+        .btn-save-script:hover { background: var(--color-eu); color: #FFF; }
+
         .btn-reset-flow { width: 100%; padding: 10px; background: #FFF; border: 1px solid var(--border); border-radius: 8px; color: var(--text-muted); font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; margin-top: 16px; }
         .btn-reset-flow:hover { background: #F1F5F9; color: var(--text-main); border-color: #CBD5E1; }
 
@@ -913,18 +962,49 @@ export default function App() {
           <div className="flow-scroll">
             {callFlowSteps.map((step, index) => {
               const isDone = completedSteps.includes(step);
+              const isExpanded = expandedSteps.includes(step);
               return (
                 <div 
                   key={step} 
                   className={`flow-item ${isDone ? 'done' : ''}`}
                   onClick={() => toggleStep(step)}
                 >
-                  <div className="flow-checkbox"></div>
-                  <div className="flow-text-container">
-                    {/* Prefix labels updated dynamically from Stage to Step */}
-                    <span className="flow-num">Step {String(index + 1).padStart(2, '0')}</span>
-                    <span className="flow-name">{step}</span>
+                  <div className="flow-row-top">
+                    <div className="flow-checkbox"></div>
+                    <div className="flow-text-container">
+                      <span className="flow-num">Step {String(index + 1).padStart(2, '0')}</span>
+                      <span className="flow-name">{step}</span>
+                    </div>
+                    <button 
+                      className={`flow-expand-trigger ${isExpanded ? 'rotated' : ''}`}
+                      onClick={(e) => toggleExpandStep(step, e)}
+                      title="Toggle Step Script Panel"
+                    >
+                      ▼
+                    </button>
                   </div>
+
+                  {isExpanded && (
+                    <div className="flow-script-panel" onClick={(e) => e.stopPropagation()}>
+                      <textarea
+                        className="flow-textarea"
+                        placeholder="Type customized call narrative script here..."
+                        value={customScripts[step] || ''}
+                        onChange={(e) => handleScriptEdit(step, e.target.value)}
+                      />
+                      <div className="flow-script-actions">
+                        <button 
+                          className="btn-save-script"
+                          onClick={() => {
+                            localStorage.setItem('callFlowScripts_v1', JSON.stringify(customScripts));
+                            alert(`Script configuration saved for ${step}!`);
+                          }}
+                        >
+                          Save Script
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
