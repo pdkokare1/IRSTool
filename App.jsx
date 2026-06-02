@@ -30,7 +30,7 @@ const defaultScripts = {
   "Greet": "Hello, good day! May I please speak with [Respondent Name]?",
   "Introduce": "My name is [Your Name] calling on behalf of IRS Research. I hope you are having a productive week.",
   "Explain Purpose": "We are conducting a brief research study regarding global market trends and technology distributions, and your perspectives would be highly valuable.",
-  "Call Monitoring & Right to Privacy Disclaimer": "Before we begin, please note that this call may be monitored or recorded for quality and training purposes. You have the right to object or opt-out at any point.",
+  "Call Monitoring & Right to Privacy Disclaimer": "Before we begin, please note that this call may be monitored or recorded for quality and training purposes. You have right to object or opt-out at any point.",
   "E-Mail Confirmation": "Could you kindly verify or provide the best email address where we can send the study summary confirmation documents?",
   "Survey": "Great, thank you. Let's move into our first milestone item: How would you evaluate your team's operational adaptation timeline?",
   "Closing Privacy Disclaimer": "As a respondent located within the regulated zone, please note your personal records are securely managed under our localized data rights compliance policies. You can request erasure at any time.",
@@ -42,9 +42,13 @@ export default function App() {
   const [regionFilter, setRegionFilter] = useState("All"); 
   const [ticker, setTicker] = useState(Date.now());
   
-  // State to manage the drawer visibility status
+  // State to manage the drawers visibility status
   const [isDrawerOpen, setIsDrawerOpen] = useState(true);
+  const [isRightDrawerOpen, setIsRightDrawerOpen] = useState(true);
   
+  // State to manage workspace view mode (Tile vs List)
+  const [viewMode, setViewMode] = useState('tile');
+
   // Dynamic scale multiplier tracker to fit cards within viewport boundaries dynamically
   const [scaleFactor, setScaleFactor] = useState(1);
   const canvasRef = useRef(null);
@@ -109,7 +113,7 @@ export default function App() {
 
   // Real-time ResizeObserver engine loop to monitor viewport boundaries and automatically scale down only upon overflow risk
   useEffect(() => {
-    if (!canvasRef.current || selectedCountries.length === 0) {
+    if (!canvasRef.current || selectedCountries.length === 0 || viewMode === 'list') {
       setScaleFactor(1);
       return;
     }
@@ -142,7 +146,7 @@ export default function App() {
     checkOverflowAndResize();
 
     return () => observer.disconnect();
-  }, [selectedCountries, converterState]);
+  }, [selectedCountries, converterState, viewMode]);
 
   const processedCountries = useMemo(() => {
     return countries.map(country => {
@@ -434,11 +438,27 @@ export default function App() {
         .burger-menu-btn.open span:nth-child(2) { opacity: 0; }
         .burger-menu-btn.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
 
-        .canvas { flex: 1; padding: 20px 24px; overflow-y: hidden; height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; position: relative; padding-top: 76px; }
+        .right-burger-menu-btn { position: absolute; top: 20px; right: 20px; background: #FFFFFF; border: 1px solid var(--border); border-radius: 10px; width: 42px; height: 42px; cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px; box-shadow: var(--shadow-sm); transition: all 0.2s ease; outline: none; z-index: 20; }
+        .right-burger-menu-btn:hover { border-color: var(--color-eu); background: #F8FAFC; transform: translateY(-1px); }
+        .right-burger-menu-btn span { display: block; width: 20px; height: 2px; background: #475569; border-radius: 2px; transition: all 0.2s; }
+        .right-burger-menu-btn.open span:nth-child(1) { transform: translateY(6px) rotate(-45deg); }
+        .right-burger-menu-btn.open span:nth-child(2) { opacity: 0; }
+        .right-burger-menu-btn.open span:nth-child(3) { transform: translateY(-6px) rotate(45deg); }
+
+        .canvas { flex: 1; padding: 20px 24px; overflow-y: auto; height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; position: relative; padding-top: 76px; }
         .canvas-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); text-align: center; animation: fadeIn 0.5s ease-in-out; }
         .canvas-empty h2 { font-size: 24px; font-weight: 800; color: var(--text-main); margin-bottom: 8px; letter-spacing: -0.03em; }
         .canvas-empty p { font-size: 14px; max-width: 380px; line-height: 1.6; color: #64748B; margin: 0; }
         
+        /* View Toggle Styling */
+        .workspace-header { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 1140px; margin: 0 auto 20px auto; }
+        .workspace-title { font-size: 20px; font-weight: 800; color: var(--text-main); margin: 0; letter-spacing: -0.02em; }
+        .view-toggle { display: flex; background: #F1F5F9; border-radius: 8px; padding: 4px; gap: 4px; border: 1px solid var(--border); }
+        .view-btn { padding: 6px 12px; font-size: 13px; font-weight: 600; border: none; background: transparent; color: #64748B; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+        .view-btn:hover:not(.active) { color: var(--text-main); background: rgba(255,255,255,0.5); }
+        .view-btn.active { background: #FFF; color: var(--color-eu); box-shadow: var(--shadow-sm); }
+
+        /* Grid View (Existing) */
         .grid { 
           display: grid; 
           grid-template-columns: repeat(auto-fit, minmax(calc(320px * var(--scale-mult)), 1fr)); 
@@ -465,7 +485,34 @@ export default function App() {
           grid-template-columns: repeat(2, minmax(calc(320px * var(--scale-mult)), 360px));
           justify-content: center;
         }
+
+        /* List View Classes */
+        .list-view-container { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 1140px; margin: 0 auto; box-sizing: border-box; flex: 1; }
+        .list-row-wrapper { display: flex; flex-direction: column; background: #FFF; border-radius: 12px; box-shadow: var(--shadow-card); border: 1px solid rgba(255,255,255,0.8); transition: transform 0.2s, box-shadow 0.2s; overflow: hidden; position: relative; width: 100%; box-sizing: border-box; animation: slideUp 0.3s ease-out; }
+        .list-row-wrapper:hover { transform: translateY(-1px); box-shadow: var(--shadow-hover); }
+        .list-row-wrapper::before { content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 5px; }
+        .list-row-wrapper.list-good::before { background: var(--grad-good); }
+        .list-row-wrapper.list-soon::before { background: var(--grad-soon); }
+        .list-row-wrapper.list-bad::before { background: var(--grad-bad); }
         
+        .list-row { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px 16px 24px; gap: 16px; }
+        
+        .list-col { display: flex; flex-direction: column; gap: 6px; }
+        .list-col-1 { flex: 1.2; align-items: flex-start; }
+        .list-col-2 { flex: 1.5; align-items: flex-start; }
+        .list-col-3 { flex: 1; display: flex; justify-content: center; align-items: center; }
+        .list-col-4 { flex: 1.2; display: flex; align-items: center; justify-content: flex-end; gap: 16px; }
+        
+        .list-name { font-weight: 800; color: var(--text-main); font-size: 16px; margin: 0; letter-spacing: -0.02em; }
+        .list-time { font-weight: 900; color: var(--text-main); font-size: 18px; margin: 0; font-variant-numeric: tabular-nums; }
+        .list-offset { font-size: 12px; font-weight: 600; color: var(--text-muted); margin: 0; }
+        
+        .btn-remove-icon { background: none; border: none; font-size: 20px; font-weight: bold; color: #94A3B8; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+        .btn-remove-icon:hover { color: #EF4444; background: #FEF2F2; }
+
+        .list-converter-wrap { padding: 0 20px 20px 24px; border-top: 1px solid var(--border); margin-top: -4px; background: #FFF; }
+        
+        /* Shared Card Styles */
         .card { 
           background-color: #FFF; 
           padding: calc(18px * var(--scale-mult)) calc(20px * var(--scale-mult)); 
@@ -499,28 +546,39 @@ export default function App() {
         .card-actions-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: calc(8px * var(--scale-mult)); padding-top: calc(10px * var(--scale-mult)); border-top: 1px solid var(--border); }
         
         .badge { border-radius: 100px; font-weight: 700; letter-spacing: 0.03em; display: inline-flex; align-items: center; font-size: calc(11px * var(--scale-mult)); padding: calc(4px * var(--scale-mult)) calc(10px * var(--scale-mult)); }
+        .badge.static-size { font-size: 11px; padding: 4px 10px; }
         .badge-eu { background-color: #EFF6FF; color: var(--color-eu); border: 1px solid rgba(59, 130, 246, 0.2); }
         .badge-good { background-color: var(--bg-good); color: #047857; border: 1px solid rgba(16, 185, 129, 0.2); }
         .badge-soon { background-color: var(--bg-soon); color: #B45309; border: 1px solid rgba(245, 158, 11, 0.2); }
         .badge-bad { background-color: var(--bg-bad); color: #475569; border: 1px solid rgba(148, 163, 184, 0.2); }
         
         .btn-toggle-converter { background-color: #F8FAFC; color: #475569; border: 1px solid var(--border); border-radius: 100px; font-weight: 700; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; font-size: calc(12px * var(--scale-mult)); padding: calc(6px * var(--scale-mult)) calc(12px * var(--scale-mult)); }
+        .btn-toggle-converter.static-size { font-size: 12px; padding: 6px 12px; }
         .btn-toggle-converter:hover { background-color: #E2E8F0; color: #0F172A; }
         
         .converter-panel { margin-bottom: calc(12px * var(--scale-mult)); padding: calc(12px * var(--scale-mult)); background-color: #F8FAFC; border-radius: calc(12px * var(--scale-mult)); border: 1px solid var(--border); animation: fadeIn 0.3s ease; overflow-y: auto; max-height: calc(170px * var(--scale-mult)); box-sizing: border-box; }
+        .converter-panel.static-size { margin-bottom: 0; margin-top: 12px; padding: 16px; max-height: 200px; }
+        
         .converter-panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .converter-panel-header label { font-size: calc(10px * var(--scale-mult)); font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 0; text-align: center; flex: 1; }
+        .static-size .converter-panel-header label { font-size: 11px; }
+        
         .btn-close { background: none; border: none; font-size: calc(16px * var(--scale-mult)); color: #94A3B8; cursor: pointer; line-height: 1; padding: 0; transition: color 0.2s; }
+        .static-size .btn-close { font-size: 18px; }
         .btn-close:hover { color: #0F172A; }
 
         .preset-container { display: flex; gap: 6px; margin-bottom: 10px; justify-content: center; }
         .preset-btn { background-color: #FFF; border: 1px solid var(--border); border-radius: 6px; font-weight: 600; color: var(--color-eu); cursor: pointer; transition: all 0.2s; font-size: calc(11px * var(--scale-mult)); padding: calc(4px * var(--scale-mult)) calc(10px * var(--scale-mult)); }
+        .preset-btn.static-size { font-size: 12px; padding: 6px 12px; }
         .preset-btn:hover { background-color: #EFF6FF; border-color: rgba(59, 130, 246, 0.3); }
 
         .datetime-column { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 10px; }
+        .static-size .datetime-column { flex-direction: row; justify-content: center; gap: 16px; }
         
         .ghost-date-wrapper { position: relative; width: 100%; max-width: calc(150px * var(--scale-mult)); margin: 0 auto; display: inline-block; }
+        .static-size .ghost-date-wrapper { margin: 0; max-width: 160px; }
         .ghost-date-display { background: #FFF; border: 1px solid var(--border); border-radius: 8px; font-weight: 600; color: var(--text-main); text-align: center; cursor: pointer; transition: all 0.2s; display: flex; justify-content: center; align-items: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); font-size: calc(12px * var(--scale-mult)); padding: calc(6px * var(--scale-mult)) calc(10px * var(--scale-mult)); }
+        .static-size .ghost-date-display { font-size: 13px; padding: 8px 12px; }
         .ghost-date-wrapper:hover .ghost-date-display { border-color: var(--color-eu); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
         
         .ghost-date-input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; box-sizing: border-box; }
@@ -528,16 +586,24 @@ export default function App() {
         
         .time-picker-container { display: flex; gap: 4px; justify-content: center; box-sizing: border-box; align-items: center; }
         .time-select { border-radius: 8px; border: 1px solid var(--border); font-family: inherit; font-weight: 500; outline: none; transition: all 0.2s; background-color: #FFF; color: var(--text-main); cursor: pointer; appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 6px center; background-size: 10px; font-size: calc(12px * var(--scale-mult)); padding: calc(6px * var(--scale-mult)); padding-right: calc(18px * var(--scale-mult)); }
+        .static-size .time-select { font-size: 13px; padding: 8px; padding-right: 24px; background-position: right 8px center; }
         .time-select:focus { border-color: var(--color-eu); box-shadow: 0 0 0 4px rgba(59,130,246,0.15); }
+        
         .ampm-toggle { display: flex; background: #F1F5F9; border-radius: 6px; padding: 2px; gap: 2px; }
         .ampm-btn { border: none; background: transparent; font-weight: 700; color: #64748B; border-radius: 4px; cursor: pointer; transition: all 0.2s; font-size: calc(11px * var(--scale-mult)); padding: calc(4px * var(--scale-mult)) calc(6px * var(--scale-mult)); }
+        .static-size .ampm-btn { font-size: 12px; padding: 6px 10px; }
         .ampm-btn.active { background: #FFF; color: var(--color-eu); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 
         .converter-result { font-weight: 600; color: var(--text-muted); background: #FFF; border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow-sm); border-left: 3px solid var(--color-eu); line-height: 1.4; font-size: calc(11px * var(--scale-mult)); padding: calc(10px * var(--scale-mult)); }
+        .static-size .converter-result { font-size: 13px; padding: 12px; }
         .converter-result span { color: var(--text-main); font-weight: 800; display: block; margin-top: 4px; letter-spacing: -0.02em; font-size: calc(14px * var(--scale-mult)); }
+        .static-size .converter-result span { font-size: 15px; }
         
         .dst-warning { color: #B45309; background: #FFFBEB; border-radius: 6px; border: 1px solid rgba(245, 158, 11, 0.3); font-weight: 600; display: flex; align-items: flex-start; gap: 6px; line-height: 1.3; animation: fadeIn 0.3s ease; font-size: calc(11px * var(--scale-mult)); padding: calc(8px * var(--scale-mult)) calc(10px * var(--scale-mult)); }
+        .static-size .dst-warning { font-size: 12px; padding: 10px; margin-top: 8px; }
+        
         .date-alert-badge { display: inline-block; font-weight: 800; border-radius: 4px; margin-top: 4px; border: 1px solid transparent; text-transform: uppercase; letter-spacing: 0.03em; font-size: calc(10px * var(--scale-mult)); padding: calc(2px * var(--scale-mult)) calc(6px * var(--scale-mult)); }
+        .static-size .date-alert-badge { font-size: 11px; padding: 4px 8px; }
         .badge-alert-weekend { background-color: #FEF2F2; color: #EF4444; border-color: rgba(239, 68, 68, 0.15); }
         .badge-alert-past { background-color: #F1F5F9; color: #475569; border-color: rgba(71, 85, 105, 0.15); }
         
@@ -548,11 +614,15 @@ export default function App() {
         .btn-view-logs:hover { border-color: var(--color-eu); background-color: #EFF6FF; color: var(--color-eu); }
         
         .btn-save-log { margin-top: 8px; width: 100%; padding: 8px; border-radius: 8px; font-size: 11px; font-weight: 700; background-color: #EFF6FF; color: var(--color-eu); border: 1px solid rgba(59, 130, 246, 0.2); cursor: pointer; transition: all 0.2s; }
+        .static-size .btn-save-log { font-size: 13px; padding: 10px; margin-top: 12px; }
         .btn-save-log:hover { background-color: var(--color-eu); color: #FFF; }
         .btn-clear-logs-action { background: none; border: none; font-size: 12px; font-weight: 700; color: #EF4444; cursor: pointer; padding: 4px 6px; border-radius: 4px; transition: background 0.2s; }
         .btn-clear-logs-action:hover { background: #FEF2F2; }
 
-        .flow-sidebar { width: 340px; min-width: 340px; background-color: var(--bg-drawer); border-left: 1px solid var(--border); display: flex; flex-direction: column; padding: 24px 16px; box-sizing: border-box; box-shadow: -4px 0 24px rgba(15, 23, 42, 0.02); height: 100vh; z-index: 10; }
+        .flow-sidebar { width: 340px; min-width: 340px; background-color: var(--bg-drawer); border-left: 1px solid var(--border); display: flex; flex-direction: column; padding: 24px 16px; box-sizing: border-box; box-shadow: -4px 0 24px rgba(15, 23, 42, 0.02); height: 100vh; z-index: 10; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .flow-sidebar.open { transform: translateX(0); margin-right: 0; }
+        .flow-sidebar.closed { transform: translateX(100%); margin-right: -340px; }
+
         .flow-title { margin: 0 0 20px 0; font-size: 18px; font-weight: 800; color: var(--text-main); letter-spacing: -0.02em; text-align: center; justify-content: center; display: flex; }
         .flow-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 4px; }
         
@@ -694,7 +764,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* Floating Burger Trigger */}
+        {/* Floating Left Burger Trigger */}
         <button 
           className={`burger-menu-btn ${isDrawerOpen ? 'open' : ''}`}
           onClick={() => setIsDrawerOpen(!isDrawerOpen)}
@@ -705,15 +775,48 @@ export default function App() {
           <span></span>
         </button>
 
+        {/* Floating Right Burger Trigger */}
+        <button 
+          className={`right-burger-menu-btn ${isRightDrawerOpen ? 'open' : ''}`}
+          onClick={() => setIsRightDrawerOpen(!isRightDrawerOpen)}
+          title={isRightDrawerOpen ? "Hide Flow Guide" : "Show Flow Guide"}
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+
         {/* ACTIVE WORKSPACE CANVAS */}
         <div className="canvas" ref={canvasRef}>
+          {selectedCountries.length > 0 && (
+            <div className="workspace-header">
+              <h2 className="workspace-title">Active Workspace</h2>
+              <div className="view-toggle">
+                <button 
+                  className={`view-btn ${viewMode === 'tile' ? 'active' : ''}`} 
+                  onClick={() => setViewMode('tile')}
+                  title="Tile View"
+                >
+                  Tiles
+                </button>
+                <button 
+                  className={`view-btn ${viewMode === 'list' ? 'active' : ''}`} 
+                  onClick={() => setViewMode('list')}
+                  title="List View"
+                >
+                  List
+                </button>
+              </div>
+            </div>
+          )}
+
           {selectedCountries.length === 0 ? (
             <div className="canvas-empty">
               <h2>Your Workspace is Empty</h2>
               <p>Select targets from the directory on the left to pin them to your active calling dashboard.</p>
             </div>
           ) : (
-            <div className="grid">
+            <div className={viewMode === 'tile' ? 'grid' : 'list-view-container'}>
               {activeTiles.map((country) => {
                 let cardClass = 'card-bad';
                 let badgeClass = 'badge-bad';
@@ -815,6 +918,161 @@ export default function App() {
                   }
                 }
 
+                // Extracted Converter Panel UI (shared between Tile and List view)
+                const ConverterPanelContent = ({ isStaticSize }) => (
+                  <div className={`converter-panel ${isStaticSize ? 'static-size' : ''}`}>
+                    <div className="converter-panel-header">
+                      <label>Respondent's Requested Time</label>
+                      <button className="btn-close" onClick={() => toggleConverter(country.name)}>&times;</button>
+                    </div>
+                    
+                    <div className="preset-container">
+                      <button className={`preset-btn ${isStaticSize ? 'static-size' : ''}`} onClick={() => applyDatePreset(country.name, 1)}>Tomorrow</button>
+                      <button className={`preset-btn ${isStaticSize ? 'static-size' : ''}`} onClick={() => applyDatePreset(country.name, 2)}>Day After</button>
+                    </div>
+
+                    <div className="datetime-column">
+                      <div 
+                        className="ghost-date-wrapper"
+                        onClick={(e) => {
+                          try { e.currentTarget.querySelector('input').showPicker(); } catch(err) {}
+                        }}
+                      >
+                        <div className="ghost-date-display">
+                          📅 {convState.date ? targetDateStr : "Select Date"}
+                        </div>
+                        <input 
+                          type="date" 
+                          className="ghost-date-input"
+                          value={convState.date || ''}
+                          onChange={(e) => handleDateTimeChange(country.name, 'date', e.target.value)}
+                        />
+                      </div>
+
+                      <div className="time-picker-container">
+                        <select 
+                          className="time-select" 
+                          value={h12} 
+                          onChange={(e) => handleTimePartChange('hour', e.target.value)}
+                        >
+                          {[...Array(12)].map((_, i) => (
+                            <option key={i + 1} value={i + 1}>{i + 1}</option>
+                          ))}
+                        </select>
+                        <span style={{ fontWeight: 'bold', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>:</span>
+                        <select 
+                          className="time-select" 
+                          value={m} 
+                          onChange={(e) => handleTimePartChange('minute', e.target.value)}
+                        >
+                          {['00','05','10','15','20','25','30','35','40','45','50','55'].map(min => (
+                            <option key={min} value={min}>{min}</option>
+                          ))}
+                        </select>
+                        <div className="ampm-toggle">
+                          <button 
+                            className={`ampm-btn ${!isPM ? 'active' : ''}`} 
+                            onClick={() => handleTimePartChange('ampm', 'AM')}
+                          >AM</button>
+                          <button 
+                            className={`ampm-btn ${isPM ? 'active' : ''}`} 
+                            onClick={() => handleTimePartChange('ampm', 'PM')}
+                          >PM</button>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {convertedAssociateTime && (
+                      <div style={{marginTop: '16px'}}>
+                        <div className="converter-result">
+                          When it is {targetFormattedTime} {convState.date && `on ${targetDateStr}`} in {country.name}, it will be:
+                          <span style={{color: 'var(--color-eu)'}}>{convertedAssociateTime}</span>
+                          in <strong>{officeLabels[associateLocation]}</strong>.
+                          
+                          {isWeekendTarget && (
+                            <div className="date-alert-badge badge-alert-weekend">⚠️ Weekend Appointment</div>
+                          )}
+                          {isPastTarget && (
+                            <div className="date-alert-badge badge-alert-past">📅 Note: Past Date</div>
+                          )}
+                        </div>
+                        
+                        {hasDstWarning && (
+                          <div className="dst-warning">
+                            <span>⚠️</span> 
+                            <span><strong>Daylight Saving Shift:</strong> The time difference between your location and {country.name} will change by this date. The converted time shown above is safely accounted for this shift.</span>
+                          </div>
+                        )}
+
+                        <button 
+                          className="btn-save-log"
+                          onClick={() => handleSaveLog(
+                            country.name,
+                            `${targetFormattedTime} ${convState.date ? `on ${targetDateStr}` : ''}`,
+                            convertedAssociateTime
+                          )}
+                        >
+                          Save Log
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+
+                // ======================================
+                // CONDITIONAL RENDER: LIST ROW VS TILE
+                // ======================================
+                if (viewMode === 'list') {
+                  const listThemeClass = `list-${cardClass.split('-')[1]}`;
+                  return (
+                    <div key={country.name} className={`list-row-wrapper ${listThemeClass}`}>
+                      <div className="list-row">
+                        {/* Col 1: Name and GDPR Status */}
+                        <div className="list-col list-col-1">
+                          <h2 className="list-name">{country.name}</h2>
+                          {country.isEU && <span className="badge badge-eu static-size">🇪🇺 GDPR</span>}
+                        </div>
+                        
+                        {/* Col 2: Time and Offset */}
+                        <div className="list-col list-col-2">
+                          <p className="list-time">{country.localTimeString}</p>
+                          <p className="list-offset">{country.offsetText}</p>
+                        </div>
+
+                        {/* Col 3: Action Converter */}
+                        <div className="list-col list-col-3">
+                          <button 
+                            onClick={() => toggleConverter(country.name)} 
+                            className="btn-toggle-converter static-size"
+                          >
+                            Convert Time
+                          </button>
+                        </div>
+
+                        {/* Col 4: Status and Remove */}
+                        <div className="list-col list-col-4">
+                          <span className={`badge ${badgeClass} static-size`}>{statusText}</span>
+                          <button 
+                            onClick={() => toggleCountry(country.name)} 
+                            className="btn-remove-icon"
+                            title="Remove from Workspace"
+                          >
+                            &times;
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Expanded Converter for List View */}
+                      {convState.isOpen && (
+                        <div className="list-converter-wrap">
+                           <ConverterPanelContent isStaticSize={true} />
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
+                // Default Return: TILE VIEW
                 return (
                   <div key={country.name} className={`card ${cardClass}`}>
                     <div>
@@ -840,105 +1098,7 @@ export default function App() {
                         </button>
                       </div>
 
-                      {convState.isOpen && (
-                        <div className="converter-panel">
-                          <div className="converter-panel-header">
-                            <label>Respondent's Requested Time</label>
-                            <button className="btn-close" onClick={() => toggleConverter(country.name)}>&times;</button>
-                          </div>
-                          
-                          <div className="preset-container">
-                            <button className="preset-btn" onClick={() => applyDatePreset(country.name, 1)}>Tomorrow</button>
-                            <button className="preset-btn" onClick={() => applyDatePreset(country.name, 2)}>Day After</button>
-                          </div>
-
-                          <div className="datetime-column">
-                            <div 
-                              className="ghost-date-wrapper"
-                              onClick={(e) => {
-                                try { e.currentTarget.querySelector('input').showPicker(); } catch(err) {}
-                              }}
-                            >
-                              <div className="ghost-date-display">
-                                📅 {convState.date ? targetDateStr : "Select Date"}
-                              </div>
-                              <input 
-                                type="date" 
-                                className="ghost-date-input"
-                                value={convState.date || ''}
-                                onChange={(e) => handleDateTimeChange(country.name, 'date', e.target.value)}
-                              />
-                            </div>
-
-                            <div className="time-picker-container">
-                              <select 
-                                className="time-select" 
-                                value={h12} 
-                                onChange={(e) => handleTimePartChange('hour', e.target.value)}
-                              >
-                                {[...Array(12)].map((_, i) => (
-                                  <option key={i + 1} value={i + 1}>{i + 1}</option>
-                                ))}
-                              </select>
-                              <span style={{ fontWeight: 'bold', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>:</span>
-                              <select 
-                                className="time-select" 
-                                value={m} 
-                                onChange={(e) => handleTimePartChange('minute', e.target.value)}
-                              >
-                                {['00','05','10','15','20','25','30','35','40','45','50','55'].map(min => (
-                                  <option key={min} value={min}>{min}</option>
-                                ))}
-                              </select>
-                              <div className="ampm-toggle">
-                                <button 
-                                  className={`ampm-btn ${!isPM ? 'active' : ''}`} 
-                                  onClick={() => handleTimePartChange('ampm', 'AM')}
-                                >AM</button>
-                                <button 
-                                  className={`ampm-btn ${isPM ? 'active' : ''}`} 
-                                  onClick={() => handleTimePartChange('ampm', 'PM')}
-                                >PM</button>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          {convertedAssociateTime && (
-                            <div style={{marginTop: '16px'}}>
-                              <div className="converter-result">
-                                When it is {targetFormattedTime} {convState.date && `on ${targetDateStr}`} in {country.name}, it will be:
-                                <span style={{color: 'var(--color-eu)'}}>{convertedAssociateTime}</span>
-                                in <strong>{officeLabels[associateLocation]}</strong>.
-                                
-                                {isWeekendTarget && (
-                                  <div className="date-alert-badge badge-alert-weekend">⚠️ Weekend Appointment</div>
-                                )}
-                                {isPastTarget && (
-                                  <div className="date-alert-badge badge-alert-past">📅 Note: Past Date</div>
-                                )}
-                              </div>
-                              
-                              {hasDstWarning && (
-                                <div className="dst-warning">
-                                  <span>⚠️</span> 
-                                  <span><strong>Daylight Saving Shift:</strong> The time difference between your location and {country.name} will change by this date. The converted time shown above is correct and has safely accounted for this shift.</span>
-                                </div>
-                              )}
-
-                              <button 
-                                className="btn-save-log"
-                                onClick={() => handleSaveLog(
-                                  country.name,
-                                  `${targetFormattedTime} ${convState.date ? `on ${targetDateStr}` : ''}`,
-                                  convertedAssociateTime
-                                )}
-                              >
-                                Save Log
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      )}
+                      {convState.isOpen && <ConverterPanelContent isStaticSize={false} />}
                     </div>
                     
                     <button 
@@ -955,7 +1115,7 @@ export default function App() {
         </div>
 
         {/* FIXED RIGHT SIDEBAR - CALL FLOW GUIDELINES TRACKER */}
-        <div className="flow-sidebar">
+        <div className={`flow-sidebar ${isRightDrawerOpen ? 'open' : 'closed'}`}>
           <h2 className="flow-title">
             Call Flow Guide
           </h2>
