@@ -30,7 +30,7 @@ const defaultScripts = {
   "Greet": "Hello, good day! May I please speak with [Respondent Name]?",
   "Introduce": "My name is [Your Name] calling on behalf of IRS Research. I hope you are having a productive week.",
   "Explain Purpose": "We are conducting a brief research study regarding global market trends and technology distributions, and your perspectives would be highly valuable.",
-  "Call Monitoring & Right to Privacy Disclaimer": "Before we begin, please note that this call may be monitored or recorded for quality and training purposes. You have right to object or opt-out at any point.",
+  "Call Monitoring & Right to Privacy Disclaimer": "Before we begin, please note that this call may be monitored or recorded for quality and training purposes. You have the right to object or opt-out at any point.",
   "E-Mail Confirmation": "Could you kindly verify or provide the best email address where we can send the study summary confirmation documents?",
   "Survey": "Great, thank you. Let's move into our first milestone item: How would you evaluate your team's operational adaptation timeline?",
   "Closing Privacy Disclaimer": "As a respondent located within the regulated zone, please note your personal records are securely managed under our localized data rights compliance policies. You can request erasure at any time.",
@@ -46,6 +46,10 @@ export default function App() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(true);
   const [isRightDrawerOpen, setIsRightDrawerOpen] = useState(true);
   
+  // State to manage Right sidebar flow guide collapsibility and scratchpad
+  const [isFlowGuideExpanded, setIsFlowGuideExpanded] = useState(false);
+  const [userNotes, setUserNotes] = useState(() => localStorage.getItem('userNotes_v1') || '');
+
   // State to manage workspace view mode (Tile vs List)
   const [viewMode, setViewMode] = useState('tile');
 
@@ -105,6 +109,7 @@ export default function App() {
   useEffect(() => localStorage.setItem('callWindowStart', callWindowStart.toString()), [callWindowStart]);
   useEffect(() => localStorage.setItem('callWindowEnd', callWindowEnd.toString()), [callWindowEnd]);
   useEffect(() => localStorage.setItem('callFlowScripts_v1', JSON.stringify(customScripts)), [customScripts]);
+  useEffect(() => localStorage.setItem('userNotes_v1', userNotes), [userNotes]);
 
   useEffect(() => {
     const interval = setInterval(() => setTicker(Date.now()), 60000);
@@ -239,6 +244,12 @@ export default function App() {
     baseSteps.push("Thanks and Regards");
     return baseSteps;
   }, [isAnyActiveCountryEU]);
+
+  // Dynamically find the active step index to apply dynamic scaling/focus classes
+  const currentStepIndex = useMemo(() => {
+    const index = callFlowSteps.findIndex(step => !completedSteps.includes(step));
+    return index === -1 ? callFlowSteps.length : index; 
+  }, [callFlowSteps, completedSteps]);
 
   const toggleCountry = (countryName) => {
     if (selectedCountries.includes(countryName)) {
@@ -501,13 +512,15 @@ export default function App() {
         .list-col-1 { flex: 1.2; align-items: flex-start; }
         .list-col-2 { flex: 1.5; align-items: flex-start; }
         .list-col-3 { flex: 1; display: flex; justify-content: center; align-items: center; }
-        .list-col-4 { flex: 1.2; display: flex; align-items: center; justify-content: flex-end; gap: 16px; }
+        
+        /* Overridden column rule to row format ensuring correct side-by-side alignment for the X button */
+        .list-col-4 { flex: 1.2; display: flex; flex-direction: row; align-items: center; justify-content: flex-end; gap: 16px; }
         
         .list-name { font-weight: 800; color: var(--text-main); font-size: 16px; margin: 0; letter-spacing: -0.02em; }
         .list-time { font-weight: 900; color: var(--text-main); font-size: 18px; margin: 0; font-variant-numeric: tabular-nums; }
         .list-offset { font-size: 12px; font-weight: 600; color: var(--text-muted); margin: 0; }
         
-        .btn-remove-icon { background: none; border: none; font-size: 20px; font-weight: bold; color: #94A3B8; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+        .btn-remove-icon { background: none; border: none; font-size: 20px; font-weight: bold; color: #94A3B8; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; padding: 0; }
         .btn-remove-icon:hover { color: #EF4444; background: #FEF2F2; }
 
         .list-converter-wrap { padding: 0 20px 20px 24px; border-top: 1px solid var(--border); margin-top: -4px; background: #FFF; }
@@ -623,26 +636,41 @@ export default function App() {
         .flow-sidebar.open { transform: translateX(0); margin-right: 0; }
         .flow-sidebar.closed { transform: translateX(100%); margin-right: -340px; }
 
-        .flow-title { margin: 0 0 20px 0; font-size: 18px; font-weight: 800; color: var(--text-main); letter-spacing: -0.02em; text-align: center; justify-content: center; display: flex; }
-        .flow-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 4px; }
+        .flow-title { margin: 0 0 16px 0; font-size: 16px; font-weight: 800; color: var(--text-main); letter-spacing: -0.02em; padding: 12px 16px; background: #F8FAFC; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s ease; user-select: none; }
+        .flow-title:hover { background: #F1F5F9; border-color: #CBD5E1; }
+        .flow-title .caret { font-size: 12px; color: #94A3B8; transition: transform 0.3s ease; }
+        .flow-title .caret.open { transform: rotate(180deg); }
+
+        .flow-scroll { flex: none; max-height: 50vh; overflow-y: auto; display: flex; flex-direction: column; padding-right: 4px; margin-bottom: 16px; animation: fadeIn 0.3s ease; }
         
-        .flow-item { display: flex; flex-direction: column; padding: 12px; background: #F8FAFC; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all 0.2s ease; user-select: none; }
-        .flow-item:hover { background: #F1F5F9; border-color: #CBD5E1; }
-        .flow-item.done { background: #F0FDF4; border-color: #BBF7D0; }
+        .flow-item { display: flex; flex-direction: column; padding: 12px; background: #F8FAFC; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); user-select: none; margin-bottom: 8px; }
+        
+        /* Dynamic Focus Classes */
+        .flow-item.future { background: #F8FAFC; opacity: 0.8; }
+        .flow-item.future:hover { background: #F1F5F9; border-color: #CBD5E1; }
+        
+        .flow-item.current { background: #FFFFFF; transform: scale(1.02); padding: 16px 14px; margin: 12px 0; border: 2px solid var(--color-eu); box-shadow: 0 6px 16px rgba(59, 130, 246, 0.12); opacity: 1; z-index: 2; position: relative; }
+        
+        .flow-item.done { background: #F0FDF4; border-color: #BBF7D0; opacity: 0.5; padding: 8px 12px; margin: 4px 0; transform: scale(0.97); }
+        .flow-item.done:hover { opacity: 0.8; }
         
         .flow-row-top { display: flex; align-items: flex-start; gap: 10px; width: 100%; position: relative; }
         
-        .flow-checkbox { width: 18px; height: 18px; border-radius: 4px; border: 2px solid #94A3B8; display: flex; align-items: center; justify-content: center; margin-top: 1px; flex-shrink: 0; background: #FFF; transition: all 0.15s; }
+        .flow-checkbox { width: 18px; height: 18px; border-radius: 4px; border: 2px solid #94A3B8; display: flex; align-items: center; justify-content: center; margin-top: 1px; flex-shrink: 0; background: #FFF; transition: all 0.3s ease; }
+        .flow-item.current .flow-checkbox { border-color: var(--color-eu); border-width: 2px; }
         .flow-item.done .flow-checkbox { background: var(--color-good); border-color: var(--color-good); }
         .flow-checkbox::after { content: '✓'; color: #FFF; font-size: 11px; font-weight: 900; display: none; }
         .flow-item.done .flow-checkbox::after { display: block; }
         
-        .flow-text-container { display: flex; flex-direction: column; gap: 2px; flex: 1; padding-right: 24px; }
+        .flow-text-container { display: flex; flex-direction: column; gap: 2px; flex: 1; padding-right: 24px; transition: all 0.3s ease; }
         
-        .flow-num { font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; }
+        .flow-num { font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; transition: all 0.3s ease; }
+        .flow-item.current .flow-num { color: var(--color-eu); font-size: 11px; }
         .flow-item.done .flow-num { color: #15803D; opacity: 0.7; }
-        .flow-name { font-size: 13px; font-weight: 600; color: #334155; line-height: 1.4; }
-        .flow-item.done .flow-name { color: #166534; text-decoration: line-through; opacity: 0.7; }
+        
+        .flow-name { font-size: 13px; font-weight: 600; color: #334155; line-height: 1.4; transition: all 0.3s ease; }
+        .flow-item.current .flow-name { font-size: 15px; font-weight: 800; color: #0F172A; }
+        .flow-item.done .flow-name { color: #166534; text-decoration: line-through; opacity: 0.7; font-size: 12px; }
         
         .flow-expand-trigger { position: absolute; right: 0; top: 2px; background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; color: #94A3B8; font-size: 12px; font-weight: bold; transition: transform 0.2s, color 0.2s; border-radius: 4px; }
         .flow-expand-trigger:hover { color: var(--color-eu); background: #E2E8F0; }
@@ -656,8 +684,15 @@ export default function App() {
         .btn-save-script { padding: 4px 10px; font-size: 11px; font-weight: 700; background: #EFF6FF; color: var(--color-eu); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 4px; cursor: pointer; transition: all 0.2s; }
         .btn-save-script:hover { background: var(--color-eu); color: #FFF; }
 
-        .btn-reset-flow { width: 100%; padding: 10px; background: #FFF; border: 1px solid var(--border); border-radius: 8px; color: var(--text-muted); font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; margin-top: 16px; }
+        .btn-reset-flow { width: 100%; padding: 10px; background: #FFF; border: 1px solid var(--border); border-radius: 8px; color: var(--text-muted); font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; margin-top: 6px; }
         .btn-reset-flow:hover { background: #F1F5F9; color: var(--text-main); border-color: #CBD5E1; }
+
+        /* Scratchpad UI */
+        .scratchpad-container { flex: 1; display: flex; flex-direction: column; min-height: 150px; }
+        .scratchpad-header { font-size: 14px; font-weight: 800; color: var(--text-main); margin: 0 0 10px 0; letter-spacing: -0.02em; padding-left: 2px; }
+        .scratchpad-textarea { flex: 1; width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 14px; font-family: inherit; font-size: 13px; color: var(--text-main); resize: none; outline: none; background: #F8FAFC; box-sizing: border-box; box-shadow: inset 0 2px 4px rgba(15, 23, 42, 0.02); transition: all 0.2s ease; line-height: 1.5; }
+        .scratchpad-textarea:focus { border-color: var(--color-eu); background: #FFF; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
+        .scratchpad-textarea::placeholder { color: #94A3B8; }
 
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,23,42,0.4); display: flex; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(4px); animation: fadeIn 0.2s ease; }
         .modal-content { background: #FFF; width: 90%; max-width: 500px; max-height: 80vh; border-radius: 20px; box-shadow: var(--shadow-hover); display: flex; flex-direction: column; overflow: hidden; animation: slideUp 0.3s ease; }
@@ -1114,67 +1149,96 @@ export default function App() {
           )}
         </div>
 
-        {/* FIXED RIGHT SIDEBAR - CALL FLOW GUIDELINES TRACKER */}
+        {/* FIXED RIGHT SIDEBAR - CALL FLOW GUIDELINES TRACKER & NOTES */}
         <div className={`flow-sidebar ${isRightDrawerOpen ? 'open' : 'closed'}`}>
-          <h2 className="flow-title">
-            Call Flow Guide
-          </h2>
-          <div className="flow-scroll">
-            {callFlowSteps.map((step, index) => {
-              const isDone = completedSteps.includes(step);
-              const isExpanded = expandedSteps.includes(step);
-              return (
-                <div 
-                  key={step} 
-                  className={`flow-item ${isDone ? 'done' : ''}`}
-                  onClick={() => toggleStep(step)}
-                >
-                  <div className="flow-row-top">
-                    <div className="flow-checkbox"></div>
-                    <div className="flow-text-container">
-                      <span className="flow-num">Step {String(index + 1).padStart(2, '0')}</span>
-                      <span className="flow-name">{step}</span>
-                    </div>
-                    <button 
-                      className={`flow-expand-trigger ${isExpanded ? 'rotated' : ''}`}
-                      onClick={(e) => toggleExpandStep(step, e)}
-                      title="Toggle Step Script Panel"
-                    >
-                      ▼
-                    </button>
-                  </div>
-
-                  {isExpanded && (
-                    <div className="flow-script-panel" onClick={(e) => e.stopPropagation()}>
-                      <textarea
-                        className="flow-textarea"
-                        placeholder="Type customized call narrative script here..."
-                        value={customScripts[step] || ''}
-                        onChange={(e) => handleScriptEdit(step, e.target.value)}
-                      />
-                      <div className="flow-script-actions">
-                        <button 
-                          className="btn-save-script"
-                          onClick={() => {
-                            localStorage.setItem('callFlowScripts_v1', JSON.stringify(customScripts));
-                            alert(`Script configuration saved for ${step}!`);
-                          }}
-                        >
-                          Save Script
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-          <button 
-            className="btn-reset-flow"
-            onClick={() => setCompletedSteps([])}
+          
+          <div 
+            className="flow-title"
+            onClick={() => setIsFlowGuideExpanded(!isFlowGuideExpanded)}
           >
-            Reset Progress
-          </button>
+            <span>Call Flow Guide</span>
+            <span className={`caret ${isFlowGuideExpanded ? 'open' : ''}`}>▼</span>
+          </div>
+
+          {/* Conditional Rendering for Flow Scroll to trigger smooth layout pushes */}
+          {isFlowGuideExpanded && (
+            <div className="flow-scroll">
+              {callFlowSteps.map((step, index) => {
+                const isDone = completedSteps.includes(step);
+                const isCurrent = index === currentStepIndex;
+                const isFuture = index > currentStepIndex;
+                const isExpanded = expandedSteps.includes(step);
+
+                let dynamicClass = 'future';
+                if (isDone) dynamicClass = 'done';
+                else if (isCurrent) dynamicClass = 'current';
+
+                return (
+                  <div 
+                    key={step} 
+                    className={`flow-item ${dynamicClass}`}
+                    onClick={() => toggleStep(step)}
+                  >
+                    <div className="flow-row-top">
+                      <div className="flow-checkbox"></div>
+                      <div className="flow-text-container">
+                        <span className="flow-num">Step {String(index + 1).padStart(2, '0')}</span>
+                        <span className="flow-name">{step}</span>
+                      </div>
+                      <button 
+                        className={`flow-expand-trigger ${isExpanded ? 'rotated' : ''}`}
+                        onClick={(e) => toggleExpandStep(step, e)}
+                        title="Toggle Step Script Panel"
+                      >
+                        ▼
+                      </button>
+                    </div>
+
+                    {isExpanded && (
+                      <div className="flow-script-panel" onClick={(e) => e.stopPropagation()}>
+                        <textarea
+                          className="flow-textarea"
+                          placeholder="Type customized call narrative script here..."
+                          value={customScripts[step] || ''}
+                          onChange={(e) => handleScriptEdit(step, e.target.value)}
+                        />
+                        <div className="flow-script-actions">
+                          <button 
+                            className="btn-save-script"
+                            onClick={() => {
+                              localStorage.setItem('callFlowScripts_v1', JSON.stringify(customScripts));
+                              alert(`Script configuration saved for ${step}!`);
+                            }}
+                          >
+                            Save Script
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              
+              <button 
+                className="btn-reset-flow"
+                onClick={() => setCompletedSteps([])}
+              >
+                Reset Progress
+              </button>
+            </div>
+          )}
+
+          {/* User Custom Notes / Scratchpad Panel */}
+          <div className="scratchpad-container">
+            <h3 className="scratchpad-header">Workspace Notes</h3>
+            <textarea 
+              className="scratchpad-textarea"
+              placeholder="Jot down quick notes, callback numbers, or key respondent insights here..."
+              value={userNotes}
+              onChange={(e) => setUserNotes(e.target.value)}
+            />
+          </div>
+
         </div>
 
         {/* LOG MODAL OVERLAY */}
