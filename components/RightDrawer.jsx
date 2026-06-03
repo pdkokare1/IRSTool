@@ -11,6 +11,13 @@ export default function RightDrawer({
   const [drawerWidth, setDrawerWidth] = useState(() => parseInt(localStorage.getItem('rightDrawerWidth_v1')) || 340);
   const isResizing = useRef(false);
 
+  // Auto-minimize the workspace notes if the user opens the Call Flow Guide
+  useEffect(() => {
+    if (isFlowGuideExpanded) {
+      setIsNotesOpen(false);
+    }
+  }, [isFlowGuideExpanded]);
+
   // Persist drawer width layout to local storage
   useEffect(() => {
     localStorage.setItem('rightDrawerWidth_v1', drawerWidth);
@@ -51,6 +58,25 @@ export default function RightDrawer({
       document.removeEventListener('mouseup', handleMouseUp);
     };
   }, [handleMouseMove, handleMouseUp]);
+
+  // Determine Notes CSS Class dynamically
+  let notesClass = 'closed';
+  if (!isFlowGuideExpanded) {
+    notesClass = 'full';
+  } else if (isNotesOpen) {
+    notesClass = 'open';
+  }
+
+  // Handle click on the Notes Header
+  const handleNotesToggle = () => {
+    if (!isFlowGuideExpanded) {
+      // If notes are full because the Guide is closed, opening the Guide will auto-minimize the notes via the useEffect
+      setIsFlowGuideExpanded(true);
+    } else {
+      // Standard manual toggle behavior
+      setIsNotesOpen(!isNotesOpen);
+    }
+  };
 
   return (
     <div 
@@ -129,10 +155,10 @@ export default function RightDrawer({
       )}
 
       {/* Workspace Notes Bottom Drawer */}
-      <div className={`scratchpad-container ${isNotesOpen ? 'open' : 'closed'}`}>
-        <div className="scratchpad-header" onClick={() => setIsNotesOpen(!isNotesOpen)}>
+      <div className={`scratchpad-container ${notesClass}`}>
+        <div className="scratchpad-header" onClick={handleNotesToggle}>
           <span>Workspace Notes</span>
-          <span className={`caret ${isNotesOpen ? 'open' : ''}`}>▼</span>
+          <span className={`caret ${notesClass !== 'closed' ? 'open' : ''}`}>▲</span>
         </div>
         <div className="scratchpad-body">
           <textarea 
