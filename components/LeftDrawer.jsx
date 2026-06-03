@@ -3,7 +3,7 @@
 import React from 'react';
 
 export default function LeftDrawer({
-  isDrawerOpen, associateLocation, setAssociateLocation, searchQuery, setSearchQuery,
+  isDrawerOpen, setIsDrawerOpen, associateLocation, setAssociateLocation, searchQuery, setSearchQuery,
   regionFilter, setRegionFilter, callWindowStart, setCallWindowStart, callWindowEnd, setCallWindowEnd,
   availableList, soonList, unavailableList, selectedCountries, toggleCountry, appointmentLogs, setIsLogModalOpen
 }) {
@@ -38,6 +38,15 @@ export default function LeftDrawer({
 
   return (
     <div className={`drawer ${isDrawerOpen ? 'open' : 'closed'}`}>
+      {/* Moved Burger Menu to outer right edge of Left Drawer */}
+      <button 
+        className={`burger-menu-btn ${isDrawerOpen ? 'open' : ''}`}
+        onClick={() => setIsDrawerOpen(!isDrawerOpen)}
+        title={isDrawerOpen ? "Hide Directory" : "Show Directory"}
+      >
+        <span></span><span></span><span></span>
+      </button>
+
       <div className="drawer-header">
         <h2 className="drawer-title">Global Directory</h2>
         
