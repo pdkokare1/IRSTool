@@ -130,15 +130,15 @@ export default function ActiveWorkspace({
                           in <strong>{officeLabels[associateLocation]}</strong>.
                         </div>
                         
-                        <div style={{marginTop: '4px'}}>
+                        <div style={{marginTop: '4px', textAlign: 'center'}}>
                           {isWeekendTarget && <div className="date-alert-badge badge-alert-weekend">⚠️ Weekend</div>}
                           {isPastTarget && <div className="date-alert-badge badge-alert-past">📅 Past Date</div>}
                         </div>
 
                         {hasDstWarning && (
                           <div className="dst-warning">
-                            <span>⚠️</span> 
-                            <span><strong>Daylight Saving Shift:</strong> The time difference between your location and {country.name} will change by this date. Safely accounted for.</span>
+                            <span>⚠️ <strong>Daylight Saving Shift:</strong></span> 
+                            <span>The time difference between your location and {country.name} will change by this date. Safely accounted for.</span>
                           </div>
                         )}
                       </>
