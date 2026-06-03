@@ -4,7 +4,7 @@ import React from 'react';
 import { getTzOffsetMins } from '../App';
 
 export default function ActiveWorkspace({
-  canvasRef, selectedCountries, activeTiles, viewMode, setViewMode, converterState, 
+  canvasRef, selectedCountries, activeTiles, converterState, 
   toggleConverter, applyDatePreset, handleDateTimeChange, handleSaveLog, associateLocation, 
   officeLabels, officeTimezones, toggleCountry, isDrawerOpen, setIsDrawerOpen, isRightDrawerOpen, setIsRightDrawerOpen
 }) {
@@ -31,10 +31,6 @@ export default function ActiveWorkspace({
         {selectedCountries.length > 0 && (
           <div className="workspace-header">
             <h2 className="workspace-title">Active Workspace</h2>
-            <div className="view-toggle">
-              <button className={`view-btn ${viewMode === 'tile' ? 'active' : ''}`} onClick={() => setViewMode('tile')}>Tiles</button>
-              <button className={`view-btn ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')}>List</button>
-            </div>
           </div>
         )}
 
@@ -44,7 +40,7 @@ export default function ActiveWorkspace({
             <p>Select targets from the directory on the left to pin them to your active calling dashboard.</p>
           </div>
         ) : (
-          <div className={viewMode === 'tile' ? 'grid' : 'list-view-container'}>
+          <div className="list-view-container">
             {activeTiles.map((country) => {
               let cardClass = 'card-bad';
               let badgeClass = 'badge-bad';
@@ -133,16 +129,16 @@ export default function ActiveWorkspace({
                 }
               }
 
-              const ConverterPanelContent = ({ isStaticSize }) => (
-                <div className={`converter-panel ${isStaticSize ? 'static-size' : ''}`}>
+              const ConverterPanelContent = () => (
+                <div className="converter-panel">
                   <div className="converter-panel-header">
                     <label>Respondent's Requested Time</label>
                     <button className="btn-close" onClick={() => toggleConverter(country.name)}>&times;</button>
                   </div>
                   
                   <div className="preset-container">
-                    <button className={`preset-btn ${isStaticSize ? 'static-size' : ''}`} onClick={() => applyDatePreset(country.name, 1)}>Tomorrow</button>
-                    <button className={`preset-btn ${isStaticSize ? 'static-size' : ''}`} onClick={() => applyDatePreset(country.name, 2)}>Day After</button>
+                    <button className="preset-btn" onClick={() => applyDatePreset(country.name, 1)}>Tomorrow</button>
+                    <button className="preset-btn" onClick={() => applyDatePreset(country.name, 2)}>Day After</button>
                   </div>
 
                   <div className="datetime-column">
@@ -194,76 +190,41 @@ export default function ActiveWorkspace({
                 </div>
               );
 
-              // ==========================================
-              // NEW SINGLE-LINE HORIZONTAL LIST RENDER
-              // ==========================================
-              if (viewMode === 'list') {
-                const listThemeClass = `list-${cardClass.split('-')[1]}`;
-                return (
-                  <div key={country.name} className={`list-row-wrapper ${listThemeClass}`}>
-                    <div className="list-row">
-                      
-                      {/* GROUP 1: NAME AND GDPR */}
-                      <div className="list-group list-group-main">
-                        <h2 className="list-name">{country.name}</h2>
-                        {country.isEU && <span className="badge badge-eu static-size">🇪🇺 GDPR</span>}
-                      </div>
-                      
-                      {/* GROUP 2: TIME AND OFFSET */}
-                      <div className="list-group list-group-time">
-                        <p className="list-time">{country.localTimeString}</p>
-                        <p className="list-offset">{country.offsetText}</p>
-                      </div>
-
-                      {/* GROUP 3: ACTIONS */}
-                      <div className="list-group-actions">
-                        <span className={`badge ${badgeClass} static-size`}>{statusText}</span>
-                        <button onClick={() => toggleConverter(country.name)} className="btn-toggle-converter static-size">
-                          Convert Time
-                        </button>
-                        <button onClick={() => toggleCountry(country.name)} className="btn-remove-icon" title="Remove from Workspace">
-                          &times;
-                        </button>
-                      </div>
-                      
-                    </div>
-                    {convState.isOpen && (
-                      <div className="list-converter-wrap">
-                         <ConverterPanelContent isStaticSize={true} />
-                      </div>
-                    )}
-                  </div>
-                );
-              }
-
+              const listThemeClass = `list-${cardClass.split('-')[1]}`;
+              
               return (
-                <div key={country.name} className={`card ${cardClass}`}>
-                  <div>
-                    <div className="card-main-row">
-                      <h2 className="card-country">{country.name}</h2>
-                      <p className="card-time">{country.localTimeString}</p>
+                <div key={country.name} className={`list-row-wrapper ${listThemeClass}`}>
+                  <div className="list-row">
+                    
+                    {/* GROUP 1: NAME AND GDPR */}
+                    <div className="list-group list-group-main">
+                      <h2 className="list-name">{country.name}</h2>
+                      {country.isEU && <span className="badge badge-eu">🇪🇺 GDPR</span>}
                     </div>
                     
-                    <div className="card-sub-row">
-                      <div style={{flex: 1}}>
-                        {country.isEU && <span className="badge badge-eu">🇪🇺 GDPR</span>}
-                      </div>
-                      <span className="card-offset">{country.offsetText}</span>
+                    {/* GROUP 2: TIME AND OFFSET */}
+                    <div className="list-group list-group-time">
+                      <p className="list-time">{country.localTimeString}</p>
+                      <p className="list-offset">{country.offsetText}</p>
                     </div>
-                    
-                    <div className="card-actions-row">
+
+                    {/* GROUP 3: ACTIONS */}
+                    <div className="list-group-actions">
                       <span className={`badge ${badgeClass}`}>{statusText}</span>
                       <button onClick={() => toggleConverter(country.name)} className="btn-toggle-converter">
                         Convert Time
                       </button>
+                      <button onClick={() => toggleCountry(country.name)} className="btn-remove-icon" title="Remove from Workspace">
+                        &times;
+                      </button>
                     </div>
-
-                    {convState.isOpen && <ConverterPanelContent isStaticSize={false} />}
+                    
                   </div>
-                  
-                  <button onClick={() => toggleCountry(country.name)} className="btn-remove">
-                    Remove from Canvas
-                  </button>
+                  {convState.isOpen && (
+                    <div className="list-converter-wrap">
+                       <ConverterPanelContent />
+                    </div>
+                  )}
                 </div>
               );
             })}
