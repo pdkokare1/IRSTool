@@ -315,7 +315,6 @@ export default function App() {
         .drawer.open { transform: translateX(0); margin-left: 0; }
         .drawer.closed { transform: translateX(-100%); margin-left: -340px; }
         
-        /* ALIGNMENT SYNC: EXACT 42px HEIGHT STARTING AT Y=20px */
         .drawer-header { padding: 20px 20px 16px; border-bottom: 1px solid var(--border); }
         .drawer-title { margin: 0 0 16px 0; height: 42px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; color: var(--text-main); letter-spacing: -0.03em; text-align: center; }
         
@@ -350,7 +349,6 @@ export default function App() {
         .selected .country-name { color: #065F46; }
         .time-preview { font-size: 12px; color: var(--text-muted); font-weight: 600; font-variant-numeric: tabular-nums; }
         
-        /* ALIGNMENT SYNC: Y=20px */
         .burger-menu-btn { position: absolute; top: 20px; left: 20px; background: #FFFFFF; border: 1px solid var(--border); border-radius: 10px; width: 42px; height: 42px; cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px; box-shadow: var(--shadow-sm); transition: all 0.2s ease; outline: none; z-index: 20; }
         .burger-menu-btn:hover { border-color: var(--color-eu); background: #F8FAFC; transform: translateY(-1px); }
         .burger-menu-btn span { display: block; width: 20px; height: 2px; background: #475569; border-radius: 2px; transition: all 0.2s; }
@@ -371,7 +369,6 @@ export default function App() {
         .canvas-empty h2 { font-size: 24px; font-weight: 800; color: var(--text-main); margin-bottom: 8px; letter-spacing: -0.03em; }
         .canvas-empty p { font-size: 14px; max-width: 380px; line-height: 1.6; color: #64748B; margin: 0; }
         
-        /* ALIGNMENT SYNC: EXACT 42px HEIGHT */
         .workspace-header { height: 42px; display: flex; justify-content: center; align-items: center; width: 100%; max-width: 1140px; margin: 0 auto 24px auto; }
         .workspace-title { font-size: 20px; font-weight: 800; color: var(--text-main); margin: 0; letter-spacing: -0.02em; text-align: center; }
 
@@ -453,12 +450,15 @@ export default function App() {
         .btn-clear-logs-action { background: none; border: none; font-size: 12px; font-weight: 700; color: #EF4444; cursor: pointer; padding: 4px 6px; border-radius: 4px; transition: background 0.2s; }
         .btn-clear-logs-action:hover { background: #FEF2F2; }
 
-        /* Right Drawer Styles */
-        .flow-sidebar { width: 340px; min-width: 340px; background-color: var(--bg-drawer); border-left: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px 16px 56px 16px; box-sizing: border-box; box-shadow: -4px 0 24px rgba(15, 23, 42, 0.02); height: 100vh; z-index: 10; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; }
+        /* Right Drawer Styles - RESIZABLE */
+        .flow-sidebar { width: min(var(--right-drawer-width, 340px), 100vw); flex-shrink: 0; background-color: var(--bg-drawer); border-left: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px 16px 56px 16px; box-sizing: border-box; box-shadow: -4px 0 24px rgba(15, 23, 42, 0.02); height: 100vh; z-index: 10; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; }
         .flow-sidebar.open { transform: translateX(0); margin-right: 0; }
-        .flow-sidebar.closed { transform: translateX(100%); margin-right: -340px; }
+        .flow-sidebar.closed { transform: translateX(100%); margin-right: calc(-1 * min(var(--right-drawer-width, 340px), 100vw)); }
         
-        /* ALIGNMENT SYNC: EXACT 42px HEIGHT STARTING AT Y=20px */
+        /* Drawer Resizer Handle */
+        .drawer-resizer { position: absolute; left: -2px; top: 0; bottom: 0; width: 6px; cursor: col-resize; z-index: 50; background: transparent; transition: background 0.2s; }
+        .drawer-resizer:hover, .drawer-resizer.active { background: var(--color-eu); }
+
         .flow-title { margin: 0 0 16px 0; width: calc(100% - 50px); box-sizing: border-box; font-size: 16px; font-weight: 800; color: var(--text-main); letter-spacing: -0.02em; padding: 0 16px; height: 42px; background: #F8FAFC; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s ease; user-select: none; }
         .flow-title:hover { background: #F1F5F9; border-color: #CBD5E1; }
         .flow-title .caret { font-size: 12px; color: #94A3B8; transition: transform 0.3s ease; }
@@ -466,11 +466,12 @@ export default function App() {
         
         .flow-scroll { flex: 1; max-height: none; overflow-y: auto; display: flex; flex-direction: column; padding-right: 4px; margin-bottom: 0; animation: fadeIn 0.3s ease; }
         
-        .flow-item { display: flex; flex-direction: column; padding: 12px; background: #F8FAFC; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); user-select: none; margin-bottom: 8px; }
+        /* REMOVED SCALING ON ACTIVE CARDS TO FIX BORDER CLIPPING */
+        .flow-item { display: flex; flex-direction: column; padding: 12px; background: #F8FAFC; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); user-select: none; margin-bottom: 8px; }
         .flow-item.future { background: #F8FAFC; opacity: 0.8; }
         .flow-item.future:hover { background: #F1F5F9; border-color: #CBD5E1; }
-        .flow-item.current { background: #FFFFFF; transform: scale(1.02); padding: 16px 14px; margin: 12px 0; border: 2px solid var(--color-eu); box-shadow: 0 6px 16px rgba(59, 130, 246, 0.12); opacity: 1; z-index: 2; position: relative; }
-        .flow-item.done { background: #F0FDF4; border-color: #BBF7D0; opacity: 0.5; padding: 8px 12px; margin: 4px 0; transform: scale(0.97); }
+        .flow-item.current { background: #FFFFFF; padding: 16px 14px; margin: 12px 0; border: 2px solid var(--color-eu); box-shadow: 0 6px 16px rgba(59, 130, 246, 0.12); opacity: 1; z-index: 2; position: relative; }
+        .flow-item.done { background: #F0FDF4; border-color: #BBF7D0; opacity: 0.5; padding: 8px 12px; margin: 4px 0; }
         .flow-item.done:hover { opacity: 0.8; }
         
         .flow-row-top { display: flex; align-items: flex-start; gap: 10px; width: 100%; position: relative; }
