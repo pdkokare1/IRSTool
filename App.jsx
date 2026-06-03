@@ -466,7 +466,6 @@ export default function App() {
         
         .flow-scroll { flex: 1; max-height: none; overflow-y: auto; display: flex; flex-direction: column; padding-right: 4px; margin-bottom: 0; animation: fadeIn 0.3s ease; }
         
-        /* REMOVED SCALING ON ACTIVE CARDS TO FIX BORDER CLIPPING */
         .flow-item { display: flex; flex-direction: column; padding: 12px; background: #F8FAFC; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); user-select: none; margin-bottom: 8px; }
         .flow-item.future { background: #F8FAFC; opacity: 0.8; }
         .flow-item.future:hover { background: #F1F5F9; border-color: #CBD5E1; }
@@ -506,6 +505,8 @@ export default function App() {
         .scratchpad-container { position: absolute; bottom: 0; left: 0; width: 100%; background: #FFFFFF; border-top: 1px solid var(--border); display: flex; flex-direction: column; transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 20; box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.05); }
         .scratchpad-container.open { height: 50%; }
         .scratchpad-container.closed { height: 56px; overflow: hidden; }
+        .scratchpad-container.full { height: calc(100% - 78px); }
+        
         .scratchpad-header { height: 56px; min-height: 56px; margin: 0; padding: 0 20px; font-size: 15px; font-weight: 800; color: var(--text-main); letter-spacing: -0.02em; display: flex; align-items: center; justify-content: space-between; cursor: pointer; background: #F8FAFC; transition: background 0.2s; user-select: none; border-bottom: 1px solid var(--border); }
         .scratchpad-header:hover { background: #F1F5F9; }
         .scratchpad-header .caret { font-size: 12px; color: #94A3B8; transition: transform 0.3s ease; }
