@@ -1,6 +1,6 @@
 // components/RightDrawer.jsx
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 
 export default function RightDrawer({
   isRightDrawerOpen, isFlowGuideExpanded, setIsFlowGuideExpanded, callFlowSteps, completedSteps, 
@@ -8,9 +8,62 @@ export default function RightDrawer({
   setCompletedSteps, userNotes, setUserNotes
 }) {
   const [isNotesOpen, setIsNotesOpen] = useState(false);
+  const [drawerWidth, setDrawerWidth] = useState(() => parseInt(localStorage.getItem('rightDrawerWidth_v1')) || 340);
+  const isResizing = useRef(false);
+
+  // Persist drawer width layout to local storage
+  useEffect(() => {
+    localStorage.setItem('rightDrawerWidth_v1', drawerWidth);
+  }, [drawerWidth]);
+
+  // Handle Drag logic
+  const handleMouseMove = useCallback((e) => {
+    if (!isResizing.current) return;
+    const newWidth = document.body.clientWidth - e.clientX;
+    // Set a minimum width of 280px and maximum of 800px or full screen
+    if (newWidth >= 280 && newWidth <= 800) {
+      setDrawerWidth(newWidth);
+    }
+  }, []);
+
+  const handleMouseUp = useCallback(() => {
+    if (isResizing.current) {
+      isResizing.current = false;
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    }
+  }, [handleMouseMove]);
+
+  const handleMouseDown = useCallback((e) => {
+    isResizing.current = true;
+    document.body.style.userSelect = 'none'; // Prevent text highlighting while dragging
+    document.body.style.cursor = 'col-resize';
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  }, [handleMouseMove, handleMouseUp]);
+
+  // Clean up event listeners on unmount
+  useEffect(() => {
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [handleMouseMove, handleMouseUp]);
 
   return (
-    <div className={`flow-sidebar ${isRightDrawerOpen ? 'open' : 'closed'}`}>
+    <div 
+      className={`flow-sidebar ${isRightDrawerOpen ? 'open' : 'closed'}`}
+      style={{ '--right-drawer-width': `${drawerWidth}px` }}
+    >
+      {/* DRAG RESIZER HANDLE */}
+      <div 
+        className="drawer-resizer" 
+        onMouseDown={handleMouseDown}
+        title="Drag to resize panel"
+      ></div>
+
       <div className="flow-title" onClick={() => setIsFlowGuideExpanded(!isFlowGuideExpanded)}>
         <span>Call Flow Guide</span>
         <span className={`caret ${isFlowGuideExpanded ? 'open' : ''}`}>▼</span>
@@ -75,7 +128,7 @@ export default function RightDrawer({
         </div>
       )}
 
-      {/* New Workspace Notes Bottom Drawer */}
+      {/* Workspace Notes Bottom Drawer */}
       <div className={`scratchpad-container ${isNotesOpen ? 'open' : 'closed'}`}>
         <div className="scratchpad-header" onClick={() => setIsNotesOpen(!isNotesOpen)}>
           <span>Workspace Notes</span>
