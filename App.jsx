@@ -133,21 +133,42 @@ export default function App() {
       const now = new Date();
       let localTimeString = "Error";
       let localHour = 0;
+      let localMinute = 0;
       let callStatus = 'unavailable';
       let offsetText = "Unknown offset";
       let diffMins = 0;
+      let waitMins = 0;
 
       try {
         const options = { timeZone: country.timezone, hour: 'numeric', minute: 'numeric', hour12: true };
         localTimeString = new Intl.DateTimeFormat('en-US', options).format(now);
 
-        const hourOptions = { timeZone: country.timezone, hour: 'numeric', hour12: false };
-        localHour = parseInt(new Intl.DateTimeFormat('en-US', hourOptions).format(now), 10);
+        const parts24 = new Intl.DateTimeFormat('en-US', { timeZone: country.timezone, hour: 'numeric', minute: 'numeric', hour12: false }).formatToParts(now);
+        const hrVal = parts24.find(p => p.type === 'hour')?.value;
+        const mnVal = parts24.find(p => p.type === 'minute')?.value;
+        
+        localHour = parseInt(hrVal === '24' ? '0' : hrVal, 10);
+        localMinute = parseInt(mnVal || '0', 10);
 
-        if (localHour >= callWindowStart && localHour < callWindowEnd) {
+        const currentMins = localHour * 60 + localMinute;
+        const startMins = callWindowStart * 60;
+        const endMins = callWindowEnd * 60;
+
+        if (currentMins >= startMins && currentMins < endMins) {
           callStatus = 'available';
-        } else if (localHour >= (callWindowStart - 2) && localHour < callWindowStart) {
-          callStatus = 'soon';
+          waitMins = 0;
+        } else {
+          if (currentMins >= (startMins - 120) && currentMins < startMins) {
+            callStatus = 'soon';
+          } else {
+            callStatus = 'unavailable';
+          }
+          
+          if (currentMins < startMins) {
+            waitMins = startMins - currentMins;
+          } else {
+            waitMins = (24 * 60 - currentMins) + startMins;
+          }
         }
 
         const associateOffsetNow = getTzOffsetMins(now, currentAssociateTz);
@@ -166,7 +187,7 @@ export default function App() {
       } catch (err) {
         console.warn(`Timezone validation failed for ${country.name}`);
       }
-      return { ...country, localTimeString, callStatus, offsetText, diffMins };
+      return { ...country, localTimeString, callStatus, offsetText, diffMins, waitMins };
     });
   }, [ticker, associateLocation, callWindowStart, callWindowEnd]);
 
@@ -185,7 +206,22 @@ export default function App() {
   const unavailableList = useMemo(() => filteredForDrawer.filter(c => c.callStatus === 'unavailable'), [filteredForDrawer]);
 
   const activeTiles = useMemo(() => {
-    return processedCountries.filter(c => selectedCountries.includes(c.name));
+    const active = processedCountries.filter(c => selectedCountries.includes(c.name));
+    return active.sort((a, b) => {
+      const statusRank = { available: 1, soon: 2, unavailable: 3 };
+      const rankA = statusRank[a.callStatus] || 4;
+      const rankB = statusRank[b.callStatus] || 4;
+      
+      if (rankA !== rankB) {
+        return rankA - rankB; // First group by Status Rank
+      }
+      
+      if (a.callStatus === 'available') {
+        return a.name.localeCompare(b.name); // Then order alphabetically if available
+      } else {
+        return a.waitMins - b.waitMins; // Else sort mathematically by quickest availability
+      }
+    });
   }, [processedCountries, selectedCountries]);
 
   const isAnyActiveCountryEU = useMemo(() => activeTiles.some(country => country.isEU), [activeTiles]);
@@ -488,7 +524,7 @@ export default function App() {
         .flow-sidebar { width: 340px; min-width: 340px; background-color: var(--bg-drawer); border-left: 1px solid var(--border); display: flex; flex-direction: column; padding: 24px 16px; box-sizing: border-box; box-shadow: -4px 0 24px rgba(15, 23, 42, 0.02); height: 100vh; z-index: 10; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .flow-sidebar.open { transform: translateX(0); margin-right: 0; }
         .flow-sidebar.closed { transform: translateX(100%); margin-right: -340px; }
-        .flow-title { margin: 0 0 16px 0; font-size: 16px; font-weight: 800; color: var(--text-main); letter-spacing: -0.02em; padding: 12px 16px; background: #F8FAFC; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s ease; user-select: none; }
+        .flow-title { margin: 0 0 16px 0; width: calc(100% - 50px); box-sizing: border-box; font-size: 16px; font-weight: 800; color: var(--text-main); letter-spacing: -0.02em; padding: 12px 16px; background: #F8FAFC; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s ease; user-select: none; }
         .flow-title:hover { background: #F1F5F9; border-color: #CBD5E1; }
         .flow-title .caret { font-size: 12px; color: #94A3B8; transition: transform 0.3s ease; }
         .flow-title .caret.open { transform: rotate(180deg); }
