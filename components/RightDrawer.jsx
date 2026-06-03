@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
 export default function RightDrawer({
-  isRightDrawerOpen, isFlowGuideExpanded, setIsFlowGuideExpanded, callFlowSteps, completedSteps, 
+  isRightDrawerOpen, setIsRightDrawerOpen, isFlowGuideExpanded, setIsFlowGuideExpanded, callFlowSteps, completedSteps, 
   currentStepIndex, expandedSteps, toggleStep, toggleExpandStep, customScripts, handleScriptEdit, 
   setCompletedSteps, userNotes, setUserNotes
 }) {
@@ -27,7 +27,6 @@ export default function RightDrawer({
   const handleMouseMove = useCallback((e) => {
     if (!isResizing.current) return;
     const newWidth = document.body.clientWidth - e.clientX;
-    // Set a minimum width of 280px and maximum of 800px or full screen
     if (newWidth >= 280 && newWidth <= 800) {
       setDrawerWidth(newWidth);
     }
@@ -45,13 +44,12 @@ export default function RightDrawer({
 
   const handleMouseDown = useCallback((e) => {
     isResizing.current = true;
-    document.body.style.userSelect = 'none'; // Prevent text highlighting while dragging
+    document.body.style.userSelect = 'none'; 
     document.body.style.cursor = 'col-resize';
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
   }, [handleMouseMove, handleMouseUp]);
 
-  // Clean up event listeners on unmount
   useEffect(() => {
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
@@ -59,7 +57,6 @@ export default function RightDrawer({
     };
   }, [handleMouseMove, handleMouseUp]);
 
-  // Determine Notes CSS Class dynamically
   let notesClass = 'closed';
   if (!isFlowGuideExpanded) {
     notesClass = 'full';
@@ -67,13 +64,10 @@ export default function RightDrawer({
     notesClass = 'open';
   }
 
-  // Handle click on the Notes Header
   const handleNotesToggle = () => {
     if (!isFlowGuideExpanded) {
-      // If notes are full because the Guide is closed, opening the Guide will auto-minimize the notes via the useEffect
       setIsFlowGuideExpanded(true);
     } else {
-      // Standard manual toggle behavior
       setIsNotesOpen(!isNotesOpen);
     }
   };
@@ -83,7 +77,15 @@ export default function RightDrawer({
       className={`flow-sidebar ${isRightDrawerOpen ? 'open' : 'closed'}`}
       style={{ '--right-drawer-width': `${drawerWidth}px` }}
     >
-      {/* DRAG RESIZER HANDLE */}
+      {/* Moved Burger Menu to outer left edge of Right Drawer */}
+      <button 
+        className={`right-burger-menu-btn ${isRightDrawerOpen ? 'open' : ''}`}
+        onClick={() => setIsRightDrawerOpen(!isRightDrawerOpen)}
+        title={isRightDrawerOpen ? "Hide Flow Guide" : "Show Flow Guide"}
+      >
+        <span></span><span></span><span></span>
+      </button>
+
       <div 
         className="drawer-resizer" 
         onMouseDown={handleMouseDown}
