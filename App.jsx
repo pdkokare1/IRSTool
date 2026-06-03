@@ -6,8 +6,6 @@ import LeftDrawer from './components/LeftDrawer';
 import RightDrawer from './components/RightDrawer';
 import ActiveWorkspace from './components/ActiveWorkspace';
 
-// Helper to reliably find a timezone's UTC offset (in minutes) at any specific date/time
-// Exported so ActiveWorkspace can utilize it for time conversions
 export const getTzOffsetMins = (dateObj, timeZone) => {
   try {
     const fmt = new Intl.DateTimeFormat('en-US', {
@@ -24,7 +22,7 @@ export const getTzOffsetMins = (dateObj, timeZone) => {
     const tzDate = new Date(isoString);
     return Math.round((tzDate - dateObj) / 60000);
   } catch (e) {
-    return 0; // Fallback
+    return 0; 
   }
 };
 
@@ -185,16 +183,9 @@ export default function App() {
       const statusRank = { available: 1, soon: 2, unavailable: 3 };
       const rankA = statusRank[a.callStatus] || 4;
       const rankB = statusRank[b.callStatus] || 4;
-      
-      if (rankA !== rankB) {
-        return rankA - rankB; 
-      }
-      
-      if (a.callStatus === 'available') {
-        return a.name.localeCompare(b.name); 
-      } else {
-        return a.waitMins - b.waitMins; 
-      }
+      if (rankA !== rankB) return rankA - rankB; 
+      if (a.callStatus === 'available') return a.name.localeCompare(b.name); 
+      return a.waitMins - b.waitMins; 
     });
   }, [processedCountries, selectedCountries]);
 
@@ -311,7 +302,7 @@ export default function App() {
         .layout { display: flex; height: 100vh; overflow: hidden; position: relative; width: 100vw; }
         
         /* Drawer Styles */
-        .drawer { width: 340px; min-width: 340px; background-color: var(--bg-drawer); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 10; box-shadow: 4px 0 24px rgba(15, 23, 42, 0.03); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .drawer { width: 340px; min-width: 340px; background-color: var(--bg-drawer); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 10; box-shadow: 4px 0 24px rgba(15, 23, 42, 0.03); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; }
         .drawer.open { transform: translateX(0); margin-left: 0; }
         .drawer.closed { transform: translateX(-100%); margin-left: -340px; }
         
@@ -349,15 +340,16 @@ export default function App() {
         .selected .country-name { color: #065F46; }
         .time-preview { font-size: 12px; color: var(--text-muted); font-weight: 600; font-variant-numeric: tabular-nums; }
         
-        .burger-menu-btn { position: absolute; top: 20px; left: 20px; background: #FFFFFF; border: 1px solid var(--border); border-radius: 10px; width: 42px; height: 42px; cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px; box-shadow: var(--shadow-sm); transition: all 0.2s ease; outline: none; z-index: 20; }
-        .burger-menu-btn:hover { border-color: var(--color-eu); background: #F8FAFC; transform: translateY(-1px); }
+        /* Updated Burger Menus to attach to Drawer Edges */
+        .burger-menu-btn { position: absolute; top: 20px; right: -42px; background: #FFFFFF; border: 1px solid var(--border); border-left: none; border-radius: 0 10px 10px 0; width: 42px; height: 42px; cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px; box-shadow: 4px 2px 4px rgba(15, 23, 42, 0.04); transition: background 0.2s ease; outline: none; z-index: 50; }
+        .burger-menu-btn:hover { background: #F8FAFC; }
         .burger-menu-btn span { display: block; width: 20px; height: 2px; background: #475569; border-radius: 2px; transition: all 0.2s; }
         .burger-menu-btn.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
         .burger-menu-btn.open span:nth-child(2) { opacity: 0; }
         .burger-menu-btn.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
 
-        .right-burger-menu-btn { position: absolute; top: 20px; right: 20px; background: #FFFFFF; border: 1px solid var(--border); border-radius: 10px; width: 42px; height: 42px; cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px; box-shadow: var(--shadow-sm); transition: all 0.2s ease; outline: none; z-index: 20; }
-        .right-burger-menu-btn:hover { border-color: var(--color-eu); background: #F8FAFC; transform: translateY(-1px); }
+        .right-burger-menu-btn { position: absolute; top: 20px; left: -42px; background: #FFFFFF; border: 1px solid var(--border); border-right: none; border-radius: 10px 0 0 10px; width: 42px; height: 42px; cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px; box-shadow: -4px 2px 4px rgba(15, 23, 42, 0.04); transition: background 0.2s ease; outline: none; z-index: 50; }
+        .right-burger-menu-btn:hover { background: #F8FAFC; }
         .right-burger-menu-btn span { display: block; width: 20px; height: 2px; background: #475569; border-radius: 2px; transition: all 0.2s; }
         .right-burger-menu-btn.open span:nth-child(1) { transform: translateY(6px) rotate(-45deg); }
         .right-burger-menu-btn.open span:nth-child(2) { opacity: 0; }
@@ -407,25 +399,29 @@ export default function App() {
         .btn-toggle-converter { background-color: #F8FAFC; color: #475569; border: 1px solid var(--border); border-radius: 100px; font-weight: 700; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; font-size: 12px; padding: 6px 12px; }
         .btn-toggle-converter:hover { background-color: #E2E8F0; color: #0F172A; }
         
-        /* Converter Panel UI */
-        .converter-panel { margin-top: 12px; padding: 16px; background-color: #F8FAFC; border-radius: 12px; border: 1px solid var(--border); animation: fadeIn 0.3s ease; box-sizing: border-box; }
-        .converter-panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .converter-panel-header label { font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 0; text-align: center; flex: 1; }
-        .btn-close { background: none; border: none; font-size: 18px; color: #94A3B8; cursor: pointer; line-height: 1; padding: 0; transition: color 0.2s; }
-        .btn-close:hover { color: #0F172A; }
+        /* Converter Panel UI - SPLIT VIEW */
+        .converter-panel { margin-top: 12px; padding: 16px 20px; background-color: #F8FAFC; border-radius: 12px; border: 1px solid var(--border); animation: fadeIn 0.3s ease; box-sizing: border-box; display: flex; flex-direction: column; }
+        .converter-panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; width: 100%; border-bottom: 1px solid #E2E8F0; padding-bottom: 10px; }
+        .converter-panel-header label { font-size: 12px; font-weight: 800; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.05em; margin: 0; }
+        .btn-close { background: none; border: none; font-size: 20px; color: #94A3B8; cursor: pointer; line-height: 1; padding: 0; transition: color 0.2s; }
+        .btn-close:hover { color: #EF4444; }
 
-        .preset-container { display: flex; gap: 6px; margin-bottom: 10px; justify-content: center; }
+        .converter-split { display: flex; gap: 24px; align-items: stretch; width: 100%; }
+        .converter-left { flex: 1; padding-right: 24px; border-right: 1px solid var(--border); display: flex; flex-direction: column; justify-content: center; }
+        .converter-right { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+
+        .preset-container { display: flex; gap: 6px; margin-bottom: 16px; justify-content: flex-start; }
         .preset-btn { background-color: #FFF; border: 1px solid var(--border); border-radius: 6px; font-weight: 600; color: var(--color-eu); cursor: pointer; transition: all 0.2s; font-size: 12px; padding: 6px 12px; }
         .preset-btn:hover { background-color: #EFF6FF; border-color: rgba(59, 130, 246, 0.3); }
 
-        .datetime-column { display: flex; flex-direction: row; justify-content: center; align-items: center; gap: 16px; margin-bottom: 10px; }
-        .ghost-date-wrapper { position: relative; width: 100%; max-width: 160px; margin: 0; display: inline-block; }
+        .datetime-column { display: flex; flex-direction: row; justify-content: flex-start; align-items: center; gap: 16px; margin-bottom: 0; }
+        .ghost-date-wrapper { position: relative; width: 100%; max-width: 140px; margin: 0; display: inline-block; }
         .ghost-date-display { background: #FFF; border: 1px solid var(--border); border-radius: 8px; font-weight: 600; color: var(--text-main); text-align: center; cursor: pointer; transition: all 0.2s; display: flex; justify-content: center; align-items: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); font-size: 13px; padding: 8px 12px; }
         .ghost-date-wrapper:hover .ghost-date-display { border-color: var(--color-eu); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
         .ghost-date-input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; box-sizing: border-box; }
         .ghost-date-input::-webkit-calendar-picker-indicator { position: absolute; top: 0; left: 0; width: 100%; height: 100%; margin: 0; padding: 0; cursor: pointer; }
         
-        .time-picker-container { display: flex; gap: 4px; justify-content: center; box-sizing: border-box; align-items: center; }
+        .time-picker-container { display: flex; gap: 4px; justify-content: flex-start; box-sizing: border-box; align-items: center; }
         .time-select { border-radius: 8px; border: 1px solid var(--border); font-family: inherit; font-weight: 500; outline: none; transition: all 0.2s; background-color: #FFF; color: var(--text-main); cursor: pointer; appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 8px center; background-size: 10px; font-size: 13px; padding: 8px; padding-right: 24px; }
         .time-select:focus { border-color: var(--color-eu); box-shadow: 0 0 0 4px rgba(59,130,246,0.15); }
         
@@ -433,20 +429,20 @@ export default function App() {
         .ampm-btn { border: none; background: transparent; font-weight: 700; color: #64748B; border-radius: 4px; cursor: pointer; transition: all 0.2s; font-size: 12px; padding: 6px 10px; }
         .ampm-btn.active { background: #FFF; color: var(--color-eu); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 
-        .converter-result { font-weight: 600; color: var(--text-muted); background: #FFF; border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow-sm); border-left: 3px solid var(--color-eu); line-height: 1.4; font-size: 13px; padding: 12px; }
-        .converter-result span { color: var(--text-main); font-weight: 800; display: block; margin-top: 4px; letter-spacing: -0.02em; font-size: 15px; }
+        .converter-result { font-weight: 600; color: var(--text-muted); line-height: 1.5; font-size: 14px; }
+        .converter-result span { color: var(--text-main); font-weight: 800; display: block; margin: 6px 0; letter-spacing: -0.02em; font-size: 20px; }
         
-        .dst-warning { color: #B45309; background: #FFFBEB; border-radius: 6px; border: 1px solid rgba(245, 158, 11, 0.3); font-weight: 600; display: flex; align-items: flex-start; gap: 6px; line-height: 1.3; animation: fadeIn 0.3s ease; font-size: 12px; padding: 10px; margin-top: 8px; }
+        .dst-warning { color: #B45309; background: #FFFBEB; border-radius: 6px; border: 1px solid rgba(245, 158, 11, 0.3); font-weight: 600; display: flex; align-items: flex-start; gap: 6px; line-height: 1.3; animation: fadeIn 0.3s ease; font-size: 12px; padding: 10px; margin-top: 12px; }
         
-        .date-alert-badge { display: inline-block; font-weight: 800; border-radius: 4px; margin-top: 4px; border: 1px solid transparent; text-transform: uppercase; letter-spacing: 0.03em; font-size: 11px; padding: 4px 8px; }
+        .date-alert-badge { display: inline-block; font-weight: 800; border-radius: 4px; margin-top: 8px; border: 1px solid transparent; text-transform: uppercase; letter-spacing: 0.03em; font-size: 11px; padding: 4px 8px; margin-right: 6px; }
         .badge-alert-weekend { background-color: #FEF2F2; color: #EF4444; border-color: rgba(239, 68, 68, 0.15); }
         .badge-alert-past { background-color: #F1F5F9; color: #475569; border-color: rgba(71, 85, 105, 0.15); }
 
         .btn-view-logs { background-color: #FFFFFF; border: 1px solid var(--border); padding: 12px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: var(--shadow-sm); transition: all 0.2s; width: 100%; margin-top: 4px; box-sizing: border-box; }
         .btn-view-logs:hover { border-color: var(--color-eu); background-color: #EFF6FF; color: var(--color-eu); }
         
-        .btn-save-log { width: 100%; border-radius: 8px; font-weight: 700; background-color: #EFF6FF; color: var(--color-eu); border: 1px solid rgba(59, 130, 246, 0.2); cursor: pointer; transition: all 0.2s; font-size: 13px; padding: 10px; margin-top: 12px; }
-        .btn-save-log:hover { background-color: var(--color-eu); color: #FFF; }
+        .btn-save-log { width: 100%; border-radius: 8px; font-weight: 700; background-color: #EFF6FF; color: var(--color-eu); border: 1px solid rgba(59, 130, 246, 0.2); cursor: pointer; transition: all 0.2s; font-size: 13px; padding: 12px; margin-top: 16px; }
+        .btn-save-log:hover { background-color: var(--color-eu); color: #FFF; box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2); }
         .btn-clear-logs-action { background: none; border: none; font-size: 12px; font-weight: 700; color: #EF4444; cursor: pointer; padding: 4px 6px; border-radius: 4px; transition: background 0.2s; }
         .btn-clear-logs-action:hover { background: #FEF2F2; }
 
@@ -564,7 +560,7 @@ export default function App() {
         />
 
         <RightDrawer 
-          isRightDrawerOpen={isRightDrawerOpen}
+          isRightDrawerOpen={isRightDrawerOpen} setIsRightDrawerOpen={setIsRightDrawerOpen}
           isFlowGuideExpanded={isFlowGuideExpanded} setIsFlowGuideExpanded={setIsFlowGuideExpanded}
           callFlowSteps={callFlowSteps}
           completedSteps={completedSteps} setCompletedSteps={setCompletedSteps}
