@@ -1,12 +1,14 @@
 // components/RightDrawer.jsx
 
-import React from 'react';
+import React, { useState } from 'react';
 
 export default function RightDrawer({
   isRightDrawerOpen, isFlowGuideExpanded, setIsFlowGuideExpanded, callFlowSteps, completedSteps, 
   currentStepIndex, expandedSteps, toggleStep, toggleExpandStep, customScripts, handleScriptEdit, 
   setCompletedSteps, userNotes, setUserNotes
 }) {
+  const [isNotesOpen, setIsNotesOpen] = useState(false);
+
   return (
     <div className={`flow-sidebar ${isRightDrawerOpen ? 'open' : 'closed'}`}>
       <div className="flow-title" onClick={() => setIsFlowGuideExpanded(!isFlowGuideExpanded)}>
@@ -73,15 +75,22 @@ export default function RightDrawer({
         </div>
       )}
 
-      <div className="scratchpad-container">
-        <h3 className="scratchpad-header">Workspace Notes</h3>
-        <textarea 
-          className="scratchpad-textarea"
-          placeholder="Jot down quick notes, callback numbers, or key respondent insights here..."
-          value={userNotes}
-          onChange={(e) => setUserNotes(e.target.value)}
-        />
+      {/* New Workspace Notes Bottom Drawer */}
+      <div className={`scratchpad-container ${isNotesOpen ? 'open' : 'closed'}`}>
+        <div className="scratchpad-header" onClick={() => setIsNotesOpen(!isNotesOpen)}>
+          <span>Workspace Notes</span>
+          <span className={`caret ${isNotesOpen ? 'open' : ''}`}>▼</span>
+        </div>
+        <div className="scratchpad-body">
+          <textarea 
+            className="scratchpad-textarea"
+            placeholder="Jot down quick notes, callback numbers, or key respondent insights here..."
+            value={userNotes}
+            onChange={(e) => setUserNotes(e.target.value)}
+          />
+        </div>
       </div>
+      
     </div>
   );
 }
