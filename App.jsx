@@ -284,10 +284,10 @@ export default function App() {
 
   const deleteProject = (id) => {
     if (projects.length === 1) {
-      alert("You must have at least one active project.");
+      alert("You must have at least one active project to use the application.");
       return;
     }
-    if (window.confirm("Are you sure you want to delete this project? This will remove its saved countries and scripts.")) {
+    if (window.confirm("Are you sure you want to delete this project? This will permanently remove its saved countries and scripts.")) {
       const remainingProjects = projects.filter(p => p.id !== id);
       setProjects(remainingProjects);
       if (activeProjectId === id) setActiveProjectId(remainingProjects[0].id);
@@ -453,7 +453,9 @@ export default function App() {
         .right-burger-menu-btn.open span:nth-child(2) { opacity: 0; }
         .right-burger-menu-btn.open span:nth-child(3) { transform: translateY(-6px) rotate(45deg); }
 
-        .canvas { flex: 1; padding: 20px 24px; overflow-y: auto; height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; position: relative; }
+        /* Container setup for smart layout sizing */
+        .canvas { flex: 1; padding: 20px 24px; overflow-y: auto; height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; position: relative; container-type: inline-size; container-name: workspace; }
+        
         .canvas-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); text-align: center; animation: fadeIn 0.5s ease-in-out; }
         .canvas-empty h2 { font-size: 24px; font-weight: 800; color: var(--text-main); margin-bottom: 8px; letter-spacing: -0.03em; }
         .canvas-empty p { font-size: 14px; max-width: 380px; line-height: 1.6; color: #64748B; margin: 0; }
@@ -465,24 +467,21 @@ export default function App() {
         }
         .workspace-title { font-size: 20px; font-weight: 800; color: var(--text-main); margin: 0; letter-spacing: -0.02em; text-align: center; white-space: nowrap; }
         
-        .header-left { display: flex; align-items: center; gap: 8px; justify-content: flex-start; }
-        .header-right { display: flex; align-items: center; gap: 8px; justify-content: flex-end; padding-right: 42px; }
+        .header-left { display: flex; align-items: center; gap: 8px; justify-content: flex-start; padding-left: 48px; }
+        .header-right { display: flex; align-items: center; gap: 8px; justify-content: flex-end; padding-right: 48px; }
         
         .project-dropdown {
-          padding: 0 32px 0 12px; height: 34px; font-size: 14px; font-weight: 700; color: var(--color-eu); 
-          background-color: #EFF6FF; border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 8px; 
+          padding: 0 28px 0 10px; height: 34px; font-size: 13px; font-weight: 600; color: var(--text-main); 
+          background-color: #FFF; border: 1px solid var(--border); border-radius: 8px; 
           cursor: pointer; outline: none; appearance: none; 
-          background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); 
-          background-repeat: no-repeat; background-position: right 10px center; background-size: 14px; transition: background 0.2s;
+          background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); 
+          background-repeat: no-repeat; background-position: right 8px center; background-size: 14px; transition: all 0.2s;
           box-sizing: border-box; display: flex; align-items: center;
         }
-        .project-dropdown:hover { background-color: #DBEAFE; }
+        .project-dropdown:hover { background-color: #F8FAFC; border-color: var(--text-muted); }
         
         .btn-project-add { background: #10B981; color: #FFF; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 34px; height: 34px; font-size: 18px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; box-sizing: border-box; padding: 0; line-height: 1; }
         .btn-project-add:hover { background: #059669; }
-        
-        .btn-project-del { background: #FEF2F2; color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; cursor: pointer; font-weight: bold; width: 34px; height: 34px; font-size: 20px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; box-sizing: border-box; padding: 0; line-height: 1; }
-        .btn-project-del:hover { background: #FEE2E2; }
         
         .btn-header {
           height: 34px; padding: 0 14px; font-size: 13px; font-weight: 600; color: var(--text-main); 
@@ -495,7 +494,7 @@ export default function App() {
         .filter-dropdown-menu {
           position: absolute; top: calc(100% + 8px); right: 0; width: 180px; 
           background: #FFF; border: 1px solid var(--border); border-radius: 10px; 
-          box-shadow: var(--shadow-card); z-index: 9999; padding: 8px; display: flex; flex-direction: column;
+          box-shadow: var(--shadow-card); z-index: 999; padding: 8px; display: flex; flex-direction: column;
           animation: slideUp 0.2s ease-out;
         }
         /* ----------------------------------------------------------- */
@@ -587,6 +586,11 @@ export default function App() {
         .btn-clear-logs-action { background: none; border: none; font-size: 12px; font-weight: 700; color: #EF4444; cursor: pointer; padding: 4px 6px; border-radius: 4px; transition: background 0.2s; }
         .btn-clear-logs-action:hover { background: #FEF2F2; }
 
+        /* Delete Project Button (Bottom) */
+        .delete-project-zone { width: 100%; max-width: none; margin: auto auto 0 auto; padding-top: 40px; display: flex; justify-content: center; }
+        .btn-delete-project-bottom { background: #FFF; color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; font-weight: 700; font-size: 13px; padding: 10px 24px; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; box-shadow: var(--shadow-sm); }
+        .btn-delete-project-bottom:hover { background: #FEF2F2; border-color: #EF4444; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.1); transform: translateY(-1px); }
+
         .flow-sidebar { width: min(var(--right-drawer-width, 340px), 100vw); flex-shrink: 0; background-color: var(--bg-drawer); border-left: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px 16px 56px 16px; box-sizing: border-box; box-shadow: -4px 0 24px rgba(15, 23, 42, 0.02); height: 100vh; z-index: 10; transition: margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; }
         .flow-sidebar.open { margin-right: 0; }
         .flow-sidebar.closed { margin-right: calc(-1 * min(var(--right-drawer-width, 340px), 100vw)); }
@@ -665,6 +669,31 @@ export default function App() {
         
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ---------------- SMART SCALING (CONTAINER QUERIES) ---------------- */
+        @container workspace (max-width: 950px) {
+          .workspace-title { font-size: 16px; }
+          .btn-header, .project-dropdown { height: 30px; font-size: 11px; padding-left: 8px; padding-right: 26px; background-size: 12px; background-position: right 8px center; }
+          .btn-project-add { height: 30px; width: 30px; font-size: 16px; }
+          .list-row { padding: 10px 14px; gap: 10px; }
+          .list-name { font-size: 14px; }
+          .list-time { font-size: 14px; }
+          .list-offset { font-size: 10px; }
+          .badge { font-size: 10px; padding: 3px 6px; }
+          .btn-toggle-converter { font-size: 10px; padding: 4px 8px; }
+          .btn-remove-icon { font-size: 18px; width: 28px; height: 28px; }
+          .list-group-main, .list-group-time { min-width: 130px; }
+        }
+
+        @container workspace (max-width: 700px) {
+          .workspace-header { display: flex; flex-direction: column; gap: 12px; align-items: stretch; border-bottom: none; }
+          .header-left, .header-right { justify-content: center; padding: 0; width: 100%; }
+          .workspace-title { display: none; }
+          .list-row { flex-wrap: wrap; }
+          .list-group-main { width: 100%; flex: 100%; }
+          .list-group-time { width: 100%; flex: 100%; margin-top: 4px; }
+          .list-group-actions { width: 100%; flex: 100%; justify-content: flex-start; margin-top: 8px; }
+        }
       `}</style>
 
       <div className="layout">
