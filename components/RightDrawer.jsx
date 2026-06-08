@@ -90,7 +90,11 @@ export default function RightDrawer({
 
       <div className="flow-title" onClick={() => setIsFlowGuideExpanded(!isFlowGuideExpanded)}>
         <span>Call Flow Guide</span>
-        <span className={`caret ${isFlowGuideExpanded ? 'open' : ''}`}>▼</span>
+        <span className={`caret ${isFlowGuideExpanded ? 'open' : ''}`}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </span>
       </div>
 
       {isFlowGuideExpanded && (
@@ -117,7 +121,9 @@ export default function RightDrawer({
                     onClick={(e) => toggleExpandStep(step, e)}
                     title="Toggle Step Script Panel"
                   >
-                    ▼
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
                   </button>
                 </div>
 
@@ -154,7 +160,12 @@ export default function RightDrawer({
       <div className={`scratchpad-container ${notesClass}`}>
         <div className="scratchpad-header" onClick={handleNotesToggle}>
           <span>Workspace Notes</span>
-          <span className={`caret ${notesClass !== 'closed' ? 'open' : ''}`}>▲</span>
+          <span className={`caret ${notesClass !== 'closed' ? 'open' : ''}`}>
+            {/* Using an UP chevron when closed, which rotates DOWN when open */}
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="18 15 12 9 6 15"></polyline>
+            </svg>
+          </span>
         </div>
         <div className="scratchpad-body">
           <textarea 
