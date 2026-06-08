@@ -76,6 +76,10 @@ export default function App() {
   const activeProject = projects.find(p => p.id === activeProjectId) || projects[0];
   const selectedCountries = activeProject?.selectedCountries || [];
   const customScripts = activeProject?.customScripts || defaultScripts;
+
+  // Custom Modal States
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+  const [newProjectName, setNewProjectName] = useState("");
   // -------------------------------------
 
   // --- FILTER & SORT STATE ---
@@ -119,8 +123,8 @@ export default function App() {
   // Reset UI defaults when switching projects
   useEffect(() => {
     setCompletedSteps([]);
-    setFilters({ available: true, soon: false, unavailable: false, all: false }); // Always default to 'Good to Call'
-    setSortOption('alpha-asc'); // Default Alphabetical Ascending
+    setFilters({ available: true, soon: false, unavailable: false, all: false }); 
+    setSortOption('alpha-asc'); 
   }, [activeProjectId]);
 
   useEffect(() => {
@@ -260,19 +264,22 @@ export default function App() {
   }, [callFlowSteps, completedSteps]);
 
   // --- PROJECT ACTIONS ---
-  const createNewProject = () => {
-    const name = prompt("Enter a name for the new project:");
-    if (!name || name.trim() === "") return;
-    
+  const openNewProjectModal = () => {
+    setNewProjectName("");
+    setIsProjectModalOpen(true);
+  };
+
+  const handleCreateProjectConfirm = () => {
+    if (!newProjectName || newProjectName.trim() === "") return;
     const newProject = {
       id: `proj-${Date.now()}`,
-      name: name.trim(),
+      name: newProjectName.trim(),
       selectedCountries: [],
       customScripts: defaultScripts
     };
-    
     setProjects(prev => [...prev, newProject]);
     setActiveProjectId(newProject.id);
+    setIsProjectModalOpen(false);
   };
 
   const deleteProject = (id) => {
@@ -451,31 +458,36 @@ export default function App() {
         .canvas-empty h2 { font-size: 24px; font-weight: 800; color: var(--text-main); margin-bottom: 8px; letter-spacing: -0.03em; }
         .canvas-empty p { font-size: 14px; max-width: 380px; line-height: 1.6; color: #64748B; margin: 0; }
         
+        /* ---------------- PERFECT CENTER HEADER CSS ---------------- */
         .workspace-header { 
-          display: flex; justify-content: space-between; align-items: center; 
+          display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; 
           width: 100%; margin: 0 0 24px 0; padding-bottom: 16px; border-bottom: 1px solid var(--border);
         }
-        .workspace-title { font-size: 20px; font-weight: 800; color: var(--text-main); margin: 0; letter-spacing: -0.02em; }
-        .header-left, .header-right { display: flex; align-items: center; gap: 8px; }
+        .workspace-title { font-size: 20px; font-weight: 800; color: var(--text-main); margin: 0; letter-spacing: -0.02em; text-align: center; white-space: nowrap; }
+        
+        .header-left { display: flex; align-items: center; gap: 8px; justify-content: flex-start; }
+        .header-right { display: flex; align-items: center; gap: 8px; justify-content: flex-end; padding-right: 42px; }
         
         .project-dropdown {
-          padding: 8px 32px 8px 12px; font-size: 14px; font-weight: 700; color: var(--color-eu); 
+          padding: 0 32px 0 12px; height: 34px; font-size: 14px; font-weight: 700; color: var(--color-eu); 
           background-color: #EFF6FF; border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 8px; 
           cursor: pointer; outline: none; appearance: none; 
           background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); 
           background-repeat: no-repeat; background-position: right 10px center; background-size: 14px; transition: background 0.2s;
+          box-sizing: border-box; display: flex; align-items: center;
         }
         .project-dropdown:hover { background-color: #DBEAFE; }
         
-        .btn-project-add { background: #10B981; color: #FFF; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 34px; height: 34px; font-size: 18px; display: flex; align-items: center; justify-content: center; transition: all 0.2s;}
+        .btn-project-add { background: #10B981; color: #FFF; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 34px; height: 34px; font-size: 18px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; box-sizing: border-box; padding: 0; line-height: 1; }
         .btn-project-add:hover { background: #059669; }
-        .btn-project-del { background: #FEF2F2; color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; cursor: pointer; font-weight: bold; width: 34px; height: 34px; font-size: 18px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        
+        .btn-project-del { background: #FEF2F2; color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; cursor: pointer; font-weight: bold; width: 34px; height: 34px; font-size: 20px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; box-sizing: border-box; padding: 0; line-height: 1; }
         .btn-project-del:hover { background: #FEE2E2; }
         
         .btn-header {
-          padding: 8px 14px; font-size: 13px; font-weight: 600; color: var(--text-main); 
+          height: 34px; padding: 0 14px; font-size: 13px; font-weight: 600; color: var(--text-main); 
           background-color: #FFF; border: 1px solid var(--border); border-radius: 8px; 
-          cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+          cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; box-sizing: border-box;
         }
         .btn-header:hover, .btn-header.active { background-color: #F8FAFC; border-color: var(--color-eu); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
         .sort-select { padding-right: 32px; appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 10px center; background-size: 14px; }
@@ -483,9 +495,11 @@ export default function App() {
         .filter-dropdown-menu {
           position: absolute; top: calc(100% + 8px); right: 0; width: 180px; 
           background: #FFF; border: 1px solid var(--border); border-radius: 10px; 
-          box-shadow: var(--shadow-card); z-index: 100; padding: 8px; display: flex; flex-direction: column;
+          box-shadow: var(--shadow-card); z-index: 9999; padding: 8px; display: flex; flex-direction: column;
           animation: slideUp 0.2s ease-out;
         }
+        /* ----------------------------------------------------------- */
+
         .filter-option {
           display: flex; align-items: center; padding: 8px 10px; cursor: pointer; 
           border-radius: 6px; transition: background 0.2s; font-size: 13px; font-weight: 600; color: var(--text-main); user-select: none;
@@ -530,7 +544,7 @@ export default function App() {
         .converter-panel { margin-top: 12px; padding: 16px 20px; background-color: #F8FAFC; border-radius: 12px; border: 1px solid var(--border); animation: fadeIn 0.3s ease; box-sizing: border-box; display: flex; flex-direction: column; }
         .converter-panel-header { display: flex; justify-content: center; align-items: center; margin-bottom: 16px; width: 100%; border-bottom: 1px solid #E2E8F0; padding-bottom: 10px; position: relative; }
         .converter-panel-header label { font-size: 12px; font-weight: 800; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.05em; margin: 0; text-align: center; }
-        .btn-close { position: absolute; right: 0; top: -2px; background: none; border: none; font-size: 20px; color: #94A3B8; cursor: pointer; line-height: 1; padding: 0; transition: color 0.2s; }
+        .btn-close { background: none; border: none; font-size: 20px; color: #94A3B8; cursor: pointer; line-height: 1; padding: 0; transition: color 0.2s; }
         .btn-close:hover { color: #EF4444; }
 
         .converter-split { display: flex; gap: 24px; align-items: stretch; width: 100%; }
@@ -639,7 +653,7 @@ export default function App() {
 
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,23,42,0.4); display: flex; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(4px); animation: fadeIn 0.2s ease; }
         .modal-content { background: #FFF; width: 90%; max-width: 500px; max-height: 80vh; border-radius: 20px; box-shadow: var(--shadow-hover); display: flex; flex-direction: column; overflow: hidden; animation: slideUp 0.3s ease; }
-        .modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: relative; }
         .modal-header h2 { margin: 0; font-size: 18px; font-weight: 800; color: var(--text-main); }
         .modal-body { padding: 24px; overflow-y: auto; flex: 1; background: #F8FAFC; }
         .log-card { background: #FFF; border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow-sm); }
@@ -684,7 +698,7 @@ export default function App() {
           // Workspace specific Props
           projects={projects} activeProjectId={activeProjectId} 
           setActiveProjectId={setActiveProjectId} 
-          createNewProject={createNewProject} deleteProject={deleteProject}
+          openNewProjectModal={openNewProjectModal} deleteProject={deleteProject}
           filters={filters} handleFilterChange={handleFilterChange}
           sortOption={sortOption} setSortOption={setSortOption}
         />
@@ -701,6 +715,7 @@ export default function App() {
           userNotes={userNotes} setUserNotes={setUserNotes}
         />
 
+        {/* Appointment Logs Modal */}
         {isLogModalOpen && (
           <div className="modal-overlay" onClick={() => setIsLogModalOpen(false)}>
             <div className="modal-content" onClick={e => e.stopPropagation()}>
@@ -713,7 +728,7 @@ export default function App() {
                     </button>
                   )}
                 </div>
-                <button className="btn-close" onClick={() => setIsLogModalOpen(false)}>&times;</button>
+                <button className="btn-close" style={{position: 'static'}} onClick={() => setIsLogModalOpen(false)}>&times;</button>
               </div>
               <div className="modal-body">
                 {appointmentLogs.length === 0 ? (
@@ -739,6 +754,36 @@ export default function App() {
             </div>
           </div>
         )}
+
+        {/* New Project Custom Modal */}
+        {isProjectModalOpen && (
+          <div className="modal-overlay" onClick={() => setIsProjectModalOpen(false)}>
+            <div className="modal-content" style={{maxWidth: '400px'}} onClick={e => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2>Create New Project</h2>
+                <button className="btn-close" style={{position: 'static'}} onClick={() => setIsProjectModalOpen(false)}>&times;</button>
+              </div>
+              <div className="modal-body">
+                <input 
+                  autoFocus
+                  type="text" 
+                  className="search-input" 
+                  style={{marginBottom: '16px', width: '100%', fontSize: '14px'}}
+                  placeholder="Enter project name..." 
+                  value={newProjectName} 
+                  onChange={e => setNewProjectName(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') handleCreateProjectConfirm();
+                  }}
+                />
+                <button className="btn-save-log" style={{marginTop: 0}} onClick={handleCreateProjectConfirm}>
+                  Create Project
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     </>
   );
