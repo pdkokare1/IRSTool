@@ -591,6 +591,7 @@ export default function App() {
         .btn-delete-project-bottom { background: #FFF; color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; font-weight: 700; font-size: 13px; padding: 10px 24px; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; box-shadow: var(--shadow-sm); }
         .btn-delete-project-bottom:hover { background: #FEF2F2; border-color: #EF4444; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.1); transform: translateY(-1px); }
 
+        /* ------------- RIGHT DRAWER CSS UPDATES ------------- */
         .flow-sidebar { width: min(var(--right-drawer-width, 340px), 100vw); flex-shrink: 0; background-color: var(--bg-drawer); border-left: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px 16px 56px 16px; box-sizing: border-box; box-shadow: -4px 0 24px rgba(15, 23, 42, 0.02); height: 100vh; z-index: 10; transition: margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; }
         .flow-sidebar.open { margin-right: 0; }
         .flow-sidebar.closed { margin-right: calc(-1 * min(var(--right-drawer-width, 340px), 100vw)); }
@@ -598,10 +599,13 @@ export default function App() {
         .drawer-resizer { position: absolute; left: -2px; top: 0; bottom: 0; width: 6px; cursor: col-resize; z-index: 50; background: transparent; transition: background 0.2s; }
         .drawer-resizer:hover, .drawer-resizer.active { background: var(--color-eu); }
 
-        .flow-title { margin: 0 0 16px 0; width: calc(100% - 50px); box-sizing: border-box; font-size: 16px; font-weight: 800; color: var(--text-main); letter-spacing: -0.02em; padding: 0 16px; height: 42px; background: #F8FAFC; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s ease; user-select: none; }
+        /* Set Width to 100% to match panel length */
+        .flow-title { margin: 0 0 16px 0; width: 100%; box-sizing: border-box; font-size: 16px; font-weight: 800; color: var(--text-main); letter-spacing: -0.02em; padding: 0 16px; height: 42px; background: #F8FAFC; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s ease; user-select: none; }
         .flow-title:hover { background: #F1F5F9; border-color: #CBD5E1; }
-        .flow-title .caret { font-size: 12px; color: #94A3B8; transition: transform 0.3s ease; }
-        .flow-title .caret.open { transform: rotate(180deg); }
+        
+        /* Flex alignment for SVG carets */
+        .flow-title .caret, .scratchpad-header .caret { display: flex; align-items: center; justify-content: center; color: #94A3B8; transition: transform 0.3s ease; }
+        .flow-title .caret.open, .scratchpad-header .caret.open { transform: rotate(180deg); }
         
         .flow-scroll { flex: 1; max-height: none; overflow-y: auto; display: flex; flex-direction: column; padding-right: 4px; margin-bottom: 0; animation: fadeIn 0.3s ease; }
         
@@ -619,7 +623,8 @@ export default function App() {
         .flow-checkbox::after { content: '✓'; color: #FFF; font-size: 11px; font-weight: 900; display: none; }
         .flow-item.done .flow-checkbox::after { display: block; }
         
-        .flow-text-container { display: flex; flex-direction: column; gap: 2px; flex: 1; padding-right: 24px; transition: all 0.3s ease; }
+        /* Padding increased to avoid overlap with new wider button */
+        .flow-text-container { display: flex; flex-direction: column; gap: 2px; flex: 1; padding-right: 48px; transition: all 0.3s ease; }
         .flow-num { font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; transition: all 0.3s ease; }
         .flow-item.current .flow-num { color: var(--color-eu); font-size: 11px; }
         .flow-item.done .flow-num { color: #15803D; opacity: 0.7; }
@@ -627,9 +632,23 @@ export default function App() {
         .flow-item.current .flow-name { font-size: 15px; font-weight: 800; color: #0F172A; }
         .flow-item.done .flow-name { color: #166534; text-decoration: line-through; opacity: 0.7; font-size: 12px; }
         
-        .flow-expand-trigger { position: absolute; right: 0; top: 2px; background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; color: #94A3B8; font-size: 12px; font-weight: bold; transition: transform 0.2s, color 0.2s; border-radius: 4px; }
-        .flow-expand-trigger:hover { color: var(--color-eu); background: #E2E8F0; }
-        .flow-expand-trigger.rotated { transform: rotate(180deg); }
+        /* Nicer, wider dropdown arrow toggle buttons */
+        .flow-expand-trigger { 
+          position: absolute; right: 0; top: -2px; 
+          background-color: #F8FAFC; border: 1px solid var(--border); 
+          cursor: pointer; padding: 6px 14px; 
+          display: flex; align-items: center; justify-content: center; 
+          color: #64748B; font-weight: bold; 
+          transition: all 0.2s; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        }
+        .flow-expand-trigger:hover { 
+          color: var(--color-eu); background-color: #F1F5F9; border-color: #CBD5E1; 
+        }
+        .flow-expand-trigger.rotated { 
+          transform: rotate(180deg); 
+          background-color: #EFF6FF; border-color: rgba(59, 130, 246, 0.2); color: var(--color-eu);
+        }
+        .flow-item.current .flow-expand-trigger { top: -2px; }
 
         .flow-script-panel { margin-top: 10px; padding: 10px; background: #FFFFFF; border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; animation: fadeIn 0.2s ease; width: 100%; box-sizing: border-box; cursor: default; }
         .flow-textarea { width: 100%; height: 75px; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 12px; color: var(--text-main); padding: 8px; box-sizing: border-box; resize: none; background: #F8FAFC; outline: none; transition: border-color 0.2s; }
@@ -647,8 +666,6 @@ export default function App() {
         
         .scratchpad-header { height: 56px; min-height: 56px; margin: 0; padding: 0 20px; font-size: 15px; font-weight: 800; color: var(--text-main); letter-spacing: -0.02em; display: flex; align-items: center; justify-content: space-between; cursor: pointer; background: #F8FAFC; transition: background 0.2s; user-select: none; border-bottom: 1px solid var(--border); }
         .scratchpad-header:hover { background: #F1F5F9; }
-        .scratchpad-header .caret { font-size: 12px; color: #94A3B8; transition: transform 0.3s ease; }
-        .scratchpad-header .caret.open { transform: rotate(180deg); }
         
         .scratchpad-body { flex: 1; padding: 16px; display: flex; flex-direction: column; overflow: hidden; background: #FFF; }
         .scratchpad-textarea { flex: 1; width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 14px; font-family: inherit; font-size: 13px; color: var(--text-main); resize: none; outline: none; background: #F8FAFC; box-sizing: border-box; box-shadow: inset 0 2px 4px rgba(15, 23, 42, 0.02); transition: all 0.2s ease; line-height: 1.5; }
