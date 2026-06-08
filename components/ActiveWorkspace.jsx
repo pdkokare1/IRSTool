@@ -324,7 +324,7 @@ export default function ActiveWorkspace({
           onClick={() => deleteProject(activeProjectId)}
           title="Delete this project permanently"
         >
-          <span style={{ fontSize: '16px' }}>Delete Project
+          Delete Project
         </button>
       </div>
 
