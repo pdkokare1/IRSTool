@@ -52,17 +52,35 @@ export default function App() {
 
   const [completedSteps, setCompletedSteps] = useState([]);
   const [expandedSteps, setExpandedSteps] = useState([]);
-  const [customScripts, setCustomScripts] = useState(() => {
-    const saved = localStorage.getItem('callFlowScripts_v1');
-    return saved ? JSON.parse(saved) : defaultScripts;
+
+  // --- NEW PROJECT MANAGEMENT STATE ---
+  const [projects, setProjects] = useState(() => {
+    const savedProjects = localStorage.getItem('projects_v1');
+    if (savedProjects) return JSON.parse(savedProjects);
+
+    // Migration: Rescue data from the old global storage if this is the first time loading projects
+    const savedCountries = JSON.parse(localStorage.getItem('selectedCountries')) || [];
+    const savedScripts = localStorage.getItem('callFlowScripts_v1') ? JSON.parse(localStorage.getItem('callFlowScripts_v1')) : defaultScripts;
+
+    return [{
+      id: `proj-${Date.now()}`,
+      name: 'Main Project',
+      selectedCountries: savedCountries,
+      customScripts: savedScripts
+    }];
   });
+
+  const [activeProjectId, setActiveProjectId] = useState(() => {
+    return localStorage.getItem('activeProjectId_v1') || projects[0]?.id;
+  });
+
+  // Derive the active project's data
+  const activeProject = projects.find(p => p.id === activeProjectId) || projects[0];
+  const selectedCountries = activeProject?.selectedCountries || [];
+  const customScripts = activeProject?.customScripts || defaultScripts;
+  // -------------------------------------
 
   const [associateLocation, setAssociateLocation] = useState(() => localStorage.getItem('associateLoc_v2') || 'IN');
-  const [selectedCountries, setSelectedCountries] = useState(() => {
-    const saved = localStorage.getItem('selectedCountries');
-    return saved ? JSON.parse(saved) : [];
-  });
-
   const [appointmentLogs, setAppointmentLogs] = useState(() => {
     const saved = localStorage.getItem('appointmentLogs');
     return saved ? JSON.parse(saved) : [];
@@ -86,13 +104,20 @@ export default function App() {
     'UK': 'United Kingdom'
   };
 
+  // State Persistence Effects
   useEffect(() => localStorage.setItem('associateLoc_v2', associateLocation), [associateLocation]);
-  useEffect(() => localStorage.setItem('selectedCountries', JSON.stringify(selectedCountries)), [selectedCountries]);
   useEffect(() => localStorage.setItem('appointmentLogs', JSON.stringify(appointmentLogs)), [appointmentLogs]);
   useEffect(() => localStorage.setItem('callWindowStart', callWindowStart.toString()), [callWindowStart]);
   useEffect(() => localStorage.setItem('callWindowEnd', callWindowEnd.toString()), [callWindowEnd]);
-  useEffect(() => localStorage.setItem('callFlowScripts_v1', JSON.stringify(customScripts)), [customScripts]);
   useEffect(() => localStorage.setItem('userNotes_v1', userNotes), [userNotes]);
+  
+  useEffect(() => localStorage.setItem('projects_v1', JSON.stringify(projects)), [projects]);
+  useEffect(() => localStorage.setItem('activeProjectId_v1', activeProjectId), [activeProjectId]);
+
+  // Reset checkboxes when switching projects
+  useEffect(() => {
+    setCompletedSteps([]);
+  }, [activeProjectId]);
 
   useEffect(() => {
     const interval = setInterval(() => setTicker(Date.now()), 60000);
@@ -206,12 +231,56 @@ export default function App() {
     return index === -1 ? callFlowSteps.length : index; 
   }, [callFlowSteps, completedSteps]);
 
-  const toggleCountry = (countryName) => {
-    if (selectedCountries.includes(countryName)) {
-      setSelectedCountries(selectedCountries.filter(name => name !== countryName));
-    } else {
-      setSelectedCountries([...selectedCountries, countryName]);
+  // --- PROJECT ACTIONS ---
+  const createNewProject = () => {
+    const name = prompt("Enter a name for the new project:");
+    if (!name || name.trim() === "") return;
+    
+    const newProject = {
+      id: `proj-${Date.now()}`,
+      name: name.trim(),
+      selectedCountries: [],
+      customScripts: defaultScripts
+    };
+    
+    setProjects(prev => [...prev, newProject]);
+    setActiveProjectId(newProject.id);
+  };
+
+  const deleteProject = (id) => {
+    if (projects.length === 1) {
+      alert("You must have at least one active project.");
+      return;
     }
+    if (window.confirm("Are you sure you want to delete this project? This will remove its saved countries and scripts.")) {
+      const remainingProjects = projects.filter(p => p.id !== id);
+      setProjects(remainingProjects);
+      if (activeProjectId === id) setActiveProjectId(remainingProjects[0].id);
+    }
+  };
+
+  const toggleCountry = (countryName) => {
+    setProjects(prev => prev.map(p => {
+      if (p.id === activeProjectId) {
+        const isSelected = p.selectedCountries.includes(countryName);
+        return {
+          ...p,
+          selectedCountries: isSelected
+            ? p.selectedCountries.filter(c => c !== countryName)
+            : [...p.selectedCountries, countryName]
+        };
+      }
+      return p;
+    }));
+  };
+
+  const handleScriptEdit = (stepName, val) => {
+    setProjects(prev => prev.map(p => {
+      if (p.id === activeProjectId) {
+        return { ...p, customScripts: { ...p.customScripts, [stepName]: val } };
+      }
+      return p;
+    }));
   };
 
   const toggleStep = (stepName) => {
@@ -229,10 +298,6 @@ export default function App() {
     } else {
       setExpandedSteps([...expandedSteps, stepName]);
     }
-  };
-
-  const handleScriptEdit = (stepName, val) => {
-    setCustomScripts(prev => ({ ...prev, [stepName]: val }));
   };
 
   const toggleConverter = (countryName) => {
@@ -301,7 +366,6 @@ export default function App() {
         body { margin: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg-gradient); color: var(--text-main); -webkit-font-smoothing: antialiased; }
         .layout { display: flex; height: 100vh; overflow: hidden; position: relative; width: 100vw; }
         
-        /* Drawer Styles - REMOVED TRANSLATE X TO FIX ICON DISAPPEARANCE */
         .drawer { width: 340px; min-width: 340px; background-color: var(--bg-drawer); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 10; box-shadow: 4px 0 24px rgba(15, 23, 42, 0.03); transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; }
         .drawer.open { margin-left: 0; }
         .drawer.closed { margin-left: -340px; }
@@ -340,7 +404,6 @@ export default function App() {
         .selected .country-name { color: #065F46; }
         .time-preview { font-size: 12px; color: var(--text-muted); font-weight: 600; font-variant-numeric: tabular-nums; }
         
-        /* Burger Menus */
         .burger-menu-btn { position: absolute; top: 20px; right: -42px; background: #FFFFFF; border: 1px solid var(--border); border-left: none; border-radius: 0 10px 10px 0; width: 42px; height: 42px; cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px; box-shadow: 4px 2px 4px rgba(15, 23, 42, 0.04); transition: background 0.2s ease; outline: none; z-index: 50; }
         .burger-menu-btn:hover { background: #F8FAFC; }
         .burger-menu-btn span { display: block; width: 20px; height: 2px; background: #475569; border-radius: 2px; transition: all 0.2s; }
@@ -355,7 +418,6 @@ export default function App() {
         .right-burger-menu-btn.open span:nth-child(2) { opacity: 0; }
         .right-burger-menu-btn.open span:nth-child(3) { transform: translateY(-6px) rotate(45deg); }
 
-        /* Workspace & Canvas */
         .canvas { flex: 1; padding: 20px 24px; overflow-y: auto; height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; position: relative; }
         .canvas-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); text-align: center; animation: fadeIn 0.5s ease-in-out; }
         .canvas-empty h2 { font-size: 24px; font-weight: 800; color: var(--text-main); margin-bottom: 8px; letter-spacing: -0.03em; }
@@ -364,7 +426,6 @@ export default function App() {
         .workspace-header { height: 42px; display: flex; justify-content: center; align-items: center; width: 100%; max-width: 1140px; margin: 0 auto 24px auto; }
         .workspace-title { font-size: 20px; font-weight: 800; color: var(--text-main); margin: 0; letter-spacing: -0.02em; text-align: center; }
 
-        /* List View Container & Rows */
         .list-view-container { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 1140px; margin: 0 auto; box-sizing: border-box; flex: 1; }
         .list-row-wrapper { display: flex; flex-direction: column; background: #FFF; border-radius: 12px; box-shadow: var(--shadow-card); border: 1px solid rgba(255,255,255,0.8); transition: transform 0.2s, box-shadow 0.2s; overflow: hidden; position: relative; width: 100%; box-sizing: border-box; animation: slideUp 0.3s ease-out; }
         .list-row-wrapper:hover { transform: translateY(-1px); box-shadow: var(--shadow-hover); }
@@ -389,7 +450,6 @@ export default function App() {
 
         .list-converter-wrap { padding: 0 20px 20px 24px; border-top: 1px solid var(--border); margin-top: -4px; background: #FFF; }
         
-        /* Badges & Shared Elements */
         .badge { border-radius: 100px; font-weight: 700; letter-spacing: 0.03em; display: inline-flex; align-items: center; font-size: 11px; padding: 4px 10px; }
         .badge-eu { background-color: #EFF6FF; color: var(--color-eu); border: 1px solid rgba(59, 130, 246, 0.2); }
         .badge-good { background-color: var(--bg-good); color: #047857; border: 1px solid rgba(16, 185, 129, 0.2); }
@@ -399,7 +459,6 @@ export default function App() {
         .btn-toggle-converter { background-color: #F8FAFC; color: #475569; border: 1px solid var(--border); border-radius: 100px; font-weight: 700; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; font-size: 12px; padding: 6px 12px; }
         .btn-toggle-converter:hover { background-color: #E2E8F0; color: #0F172A; }
         
-        /* Converter Panel UI - CENTERED SPLIT VIEW */
         .converter-panel { margin-top: 12px; padding: 16px 20px; background-color: #F8FAFC; border-radius: 12px; border: 1px solid var(--border); animation: fadeIn 0.3s ease; box-sizing: border-box; display: flex; flex-direction: column; }
         .converter-panel-header { display: flex; justify-content: center; align-items: center; margin-bottom: 16px; width: 100%; border-bottom: 1px solid #E2E8F0; padding-bottom: 10px; position: relative; }
         .converter-panel-header label { font-size: 12px; font-weight: 800; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.05em; margin: 0; text-align: center; }
@@ -446,12 +505,10 @@ export default function App() {
         .btn-clear-logs-action { background: none; border: none; font-size: 12px; font-weight: 700; color: #EF4444; cursor: pointer; padding: 4px 6px; border-radius: 4px; transition: background 0.2s; }
         .btn-clear-logs-action:hover { background: #FEF2F2; }
 
-        /* Right Drawer Styles - REMOVED TRANSLATE X TO FIX ICON DISAPPEARANCE */
         .flow-sidebar { width: min(var(--right-drawer-width, 340px), 100vw); flex-shrink: 0; background-color: var(--bg-drawer); border-left: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px 16px 56px 16px; box-sizing: border-box; box-shadow: -4px 0 24px rgba(15, 23, 42, 0.02); height: 100vh; z-index: 10; transition: margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; }
         .flow-sidebar.open { margin-right: 0; }
         .flow-sidebar.closed { margin-right: calc(-1 * min(var(--right-drawer-width, 340px), 100vw)); }
         
-        /* Drawer Resizer Handle */
         .drawer-resizer { position: absolute; left: -2px; top: 0; bottom: 0; width: 6px; cursor: col-resize; z-index: 50; background: transparent; transition: background 0.2s; }
         .drawer-resizer:hover, .drawer-resizer.active { background: var(--color-eu); }
 
@@ -497,7 +554,6 @@ export default function App() {
         .btn-reset-flow { width: 100%; padding: 10px; background: #FFF; border: 1px solid var(--border); border-radius: 8px; color: var(--text-muted); font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; margin-top: 6px; }
         .btn-reset-flow:hover { background: #F1F5F9; color: var(--text-main); border-color: #CBD5E1; }
 
-        /* Workspace Notes BOTTOM DRAWER */
         .scratchpad-container { position: absolute; bottom: 0; left: 0; width: 100%; background: #FFFFFF; border-top: 1px solid var(--border); display: flex; flex-direction: column; transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 20; box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.05); }
         .scratchpad-container.open { height: 50%; }
         .scratchpad-container.closed { height: 56px; overflow: hidden; }
@@ -540,6 +596,10 @@ export default function App() {
           availableList={availableList} soonList={soonList} unavailableList={unavailableList}
           selectedCountries={selectedCountries} toggleCountry={toggleCountry}
           appointmentLogs={appointmentLogs} setIsLogModalOpen={setIsLogModalOpen}
+          // New Project Props
+          projects={projects} activeProjectId={activeProjectId} 
+          setActiveProjectId={setActiveProjectId} 
+          createNewProject={createNewProject} deleteProject={deleteProject}
         />
 
         <ActiveWorkspace 
