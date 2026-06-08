@@ -53,12 +53,11 @@ export default function App() {
   const [completedSteps, setCompletedSteps] = useState([]);
   const [expandedSteps, setExpandedSteps] = useState([]);
 
-  // --- NEW PROJECT MANAGEMENT STATE ---
+  // --- PROJECT MANAGEMENT STATE ---
   const [projects, setProjects] = useState(() => {
     const savedProjects = localStorage.getItem('projects_v1');
     if (savedProjects) return JSON.parse(savedProjects);
 
-    // Migration: Rescue data from the old global storage if this is the first time loading projects
     const savedCountries = JSON.parse(localStorage.getItem('selectedCountries')) || [];
     const savedScripts = localStorage.getItem('callFlowScripts_v1') ? JSON.parse(localStorage.getItem('callFlowScripts_v1')) : defaultScripts;
 
@@ -74,10 +73,14 @@ export default function App() {
     return localStorage.getItem('activeProjectId_v1') || projects[0]?.id;
   });
 
-  // Derive the active project's data
   const activeProject = projects.find(p => p.id === activeProjectId) || projects[0];
   const selectedCountries = activeProject?.selectedCountries || [];
   const customScripts = activeProject?.customScripts || defaultScripts;
+  // -------------------------------------
+
+  // --- FILTER & SORT STATE ---
+  const [filters, setFilters] = useState({ available: true, soon: false, unavailable: false, all: false });
+  const [sortOption, setSortOption] = useState('alpha-asc');
   // -------------------------------------
 
   const [associateLocation, setAssociateLocation] = useState(() => localStorage.getItem('associateLoc_v2') || 'IN');
@@ -104,7 +107,6 @@ export default function App() {
     'UK': 'United Kingdom'
   };
 
-  // State Persistence Effects
   useEffect(() => localStorage.setItem('associateLoc_v2', associateLocation), [associateLocation]);
   useEffect(() => localStorage.setItem('appointmentLogs', JSON.stringify(appointmentLogs)), [appointmentLogs]);
   useEffect(() => localStorage.setItem('callWindowStart', callWindowStart.toString()), [callWindowStart]);
@@ -114,15 +116,28 @@ export default function App() {
   useEffect(() => localStorage.setItem('projects_v1', JSON.stringify(projects)), [projects]);
   useEffect(() => localStorage.setItem('activeProjectId_v1', activeProjectId), [activeProjectId]);
 
-  // Reset checkboxes when switching projects
+  // Reset UI defaults when switching projects
   useEffect(() => {
     setCompletedSteps([]);
+    setFilters({ available: true, soon: false, unavailable: false, all: false }); // Always default to 'Good to Call'
+    setSortOption('alpha-asc'); // Default Alphabetical Ascending
   }, [activeProjectId]);
 
   useEffect(() => {
     const interval = setInterval(() => setTicker(Date.now()), 60000);
     return () => clearInterval(interval);
   }, []);
+
+  const handleFilterChange = (key) => {
+    if (key === 'all') {
+      const newVal = !filters.all;
+      setFilters({ all: newVal, available: newVal, soon: newVal, unavailable: newVal });
+    } else {
+      const newFilters = { ...filters, [key]: !filters[key] };
+      newFilters.all = newFilters.available && newFilters.soon && newFilters.unavailable;
+      setFilters(newFilters);
+    }
+  };
 
   const processedCountries = useMemo(() => {
     return countries.map(country => {
@@ -181,10 +196,11 @@ export default function App() {
           if (mins > 0) timeStr += ` ${mins}m`;
           offsetText = diffMins > 0 ? `${timeStr.trim()} ahead` : `${timeStr.trim()} behind`;
         }
+
+        return { ...country, localTimeString, callStatus, offsetText, diffMins, waitMins, currentMins };
       } catch (err) {
-        console.warn(`Timezone validation failed for ${country.name}`);
+        return { ...country, localTimeString, callStatus, offsetText, diffMins, waitMins, currentMins: 0 };
       }
-      return { ...country, localTimeString, callStatus, offsetText, diffMins, waitMins };
     });
   }, [ticker, associateLocation, callWindowStart, callWindowEnd]);
 
@@ -203,16 +219,28 @@ export default function App() {
   const unavailableList = useMemo(() => filteredForDrawer.filter(c => c.callStatus === 'unavailable'), [filteredForDrawer]);
 
   const activeTiles = useMemo(() => {
-    const active = processedCountries.filter(c => selectedCountries.includes(c.name));
-    return active.sort((a, b) => {
-      const statusRank = { available: 1, soon: 2, unavailable: 3 };
-      const rankA = statusRank[a.callStatus] || 4;
-      const rankB = statusRank[b.callStatus] || 4;
-      if (rankA !== rankB) return rankA - rankB; 
-      if (a.callStatus === 'available') return a.name.localeCompare(b.name); 
-      return a.waitMins - b.waitMins; 
+    let active = processedCountries.filter(c => selectedCountries.includes(c.name));
+
+    // Apply Workspace Filters
+    active = active.filter(c => {
+      if (filters.all) return true;
+      if (c.callStatus === 'available' && filters.available) return true;
+      if (c.callStatus === 'soon' && filters.soon) return true;
+      if (c.callStatus === 'unavailable' && filters.unavailable) return true;
+      return false;
     });
-  }, [processedCountries, selectedCountries]);
+
+    // Apply Workspace Sort
+    active.sort((a, b) => {
+      if (sortOption === 'alpha-asc') return a.name.localeCompare(b.name);
+      if (sortOption === 'alpha-desc') return b.name.localeCompare(a.name);
+      if (sortOption === 'time-asc') return a.currentMins - b.currentMins;
+      if (sortOption === 'time-desc') return b.currentMins - a.currentMins;
+      return 0;
+    });
+
+    return active;
+  }, [processedCountries, selectedCountries, filters, sortOption]);
 
   const isAnyActiveCountryEU = useMemo(() => activeTiles.some(country => country.isEU), [activeTiles]);
 
@@ -423,10 +451,50 @@ export default function App() {
         .canvas-empty h2 { font-size: 24px; font-weight: 800; color: var(--text-main); margin-bottom: 8px; letter-spacing: -0.03em; }
         .canvas-empty p { font-size: 14px; max-width: 380px; line-height: 1.6; color: #64748B; margin: 0; }
         
-        .workspace-header { height: 42px; display: flex; justify-content: center; align-items: center; width: 100%; max-width: 1140px; margin: 0 auto 24px auto; }
-        .workspace-title { font-size: 20px; font-weight: 800; color: var(--text-main); margin: 0; letter-spacing: -0.02em; text-align: center; }
+        .workspace-header { 
+          display: flex; justify-content: space-between; align-items: center; 
+          width: 100%; margin: 0 0 24px 0; padding-bottom: 16px; border-bottom: 1px solid var(--border);
+        }
+        .workspace-title { font-size: 20px; font-weight: 800; color: var(--text-main); margin: 0; letter-spacing: -0.02em; }
+        .header-left, .header-right { display: flex; align-items: center; gap: 8px; }
+        
+        .project-dropdown {
+          padding: 8px 32px 8px 12px; font-size: 14px; font-weight: 700; color: var(--color-eu); 
+          background-color: #EFF6FF; border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 8px; 
+          cursor: pointer; outline: none; appearance: none; 
+          background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); 
+          background-repeat: no-repeat; background-position: right 10px center; background-size: 14px; transition: background 0.2s;
+        }
+        .project-dropdown:hover { background-color: #DBEAFE; }
+        
+        .btn-project-add { background: #10B981; color: #FFF; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 34px; height: 34px; font-size: 18px; display: flex; align-items: center; justify-content: center; transition: all 0.2s;}
+        .btn-project-add:hover { background: #059669; }
+        .btn-project-del { background: #FEF2F2; color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; cursor: pointer; font-weight: bold; width: 34px; height: 34px; font-size: 18px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .btn-project-del:hover { background: #FEE2E2; }
+        
+        .btn-header {
+          padding: 8px 14px; font-size: 13px; font-weight: 600; color: var(--text-main); 
+          background-color: #FFF; border: 1px solid var(--border); border-radius: 8px; 
+          cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+        }
+        .btn-header:hover, .btn-header.active { background-color: #F8FAFC; border-color: var(--color-eu); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+        .sort-select { padding-right: 32px; appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 10px center; background-size: 14px; }
+        
+        .filter-dropdown-menu {
+          position: absolute; top: calc(100% + 8px); right: 0; width: 180px; 
+          background: #FFF; border: 1px solid var(--border); border-radius: 10px; 
+          box-shadow: var(--shadow-card); z-index: 100; padding: 8px; display: flex; flex-direction: column;
+          animation: slideUp 0.2s ease-out;
+        }
+        .filter-option {
+          display: flex; align-items: center; padding: 8px 10px; cursor: pointer; 
+          border-radius: 6px; transition: background 0.2s; font-size: 13px; font-weight: 600; color: var(--text-main); user-select: none;
+        }
+        .filter-option:hover { background: #F8FAFC; }
+        .filter-option input { margin-right: 10px; cursor: pointer; width: 14px; height: 14px; accent-color: var(--color-eu); }
+        .filter-divider { height: 1px; background: var(--border); margin: 4px 0; }
 
-        .list-view-container { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 1140px; margin: 0 auto; box-sizing: border-box; flex: 1; }
+        .list-view-container { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: none; margin: 0 auto; box-sizing: border-box; flex: 1; }
         .list-row-wrapper { display: flex; flex-direction: column; background: #FFF; border-radius: 12px; box-shadow: var(--shadow-card); border: 1px solid rgba(255,255,255,0.8); transition: transform 0.2s, box-shadow 0.2s; overflow: hidden; position: relative; width: 100%; box-sizing: border-box; animation: slideUp 0.3s ease-out; }
         .list-row-wrapper:hover { transform: translateY(-1px); box-shadow: var(--shadow-hover); }
         .list-row-wrapper::before { content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 5px; }
@@ -596,10 +664,6 @@ export default function App() {
           availableList={availableList} soonList={soonList} unavailableList={unavailableList}
           selectedCountries={selectedCountries} toggleCountry={toggleCountry}
           appointmentLogs={appointmentLogs} setIsLogModalOpen={setIsLogModalOpen}
-          // New Project Props
-          projects={projects} activeProjectId={activeProjectId} 
-          setActiveProjectId={setActiveProjectId} 
-          createNewProject={createNewProject} deleteProject={deleteProject}
         />
 
         <ActiveWorkspace 
@@ -617,6 +681,12 @@ export default function App() {
           toggleCountry={toggleCountry}
           isDrawerOpen={isDrawerOpen} setIsDrawerOpen={setIsDrawerOpen}
           isRightDrawerOpen={isRightDrawerOpen} setIsRightDrawerOpen={setIsRightDrawerOpen}
+          // Workspace specific Props
+          projects={projects} activeProjectId={activeProjectId} 
+          setActiveProjectId={setActiveProjectId} 
+          createNewProject={createNewProject} deleteProject={deleteProject}
+          filters={filters} handleFilterChange={handleFilterChange}
+          sortOption={sortOption} setSortOption={setSortOption}
         />
 
         <RightDrawer 
