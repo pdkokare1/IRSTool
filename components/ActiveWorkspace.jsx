@@ -1,4 +1,4 @@
-// components/ActiveWorkspace.jsx
+// src/components/ActiveWorkspace.jsx
 
 import React, { useState, useRef, useEffect } from 'react';
 import { getTzOffsetMins } from '../App';
@@ -7,7 +7,7 @@ export default function ActiveWorkspace({
   canvasRef, selectedCountries, activeTiles, converterState, 
   toggleConverter, applyDatePreset, handleDateTimeChange, handleSaveLog, associateLocation, 
   officeLabels, officeTimezones, toggleCountry, isDrawerOpen, setIsDrawerOpen, isRightDrawerOpen, setIsRightDrawerOpen,
-  projects, activeProjectId, setActiveProjectId, createNewProject, deleteProject,
+  projects, activeProjectId, setActiveProjectId, openNewProjectModal, deleteProject,
   filters, handleFilterChange, sortOption, setSortOption
 }) {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -32,7 +32,6 @@ export default function ActiveWorkspace({
         
         {/* LEFT: Project Controls */}
         <div className="header-left">
-          <h2 className="workspace-title" style={{marginRight: '12px'}}>Workspace</h2>
           <select 
             className="project-dropdown"
             value={activeProjectId}
@@ -43,9 +42,12 @@ export default function ActiveWorkspace({
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
           </select>
-          <button className="btn-project-add" onClick={createNewProject} title="Create New Project">+</button>
+          <button className="btn-project-add" onClick={openNewProjectModal} title="Create New Project">+</button>
           <button className="btn-project-del" onClick={() => deleteProject(activeProjectId)} title="Delete Current Project">&times;</button>
         </div>
+
+        {/* CENTER: Title */}
+        <h2 className="workspace-title">Workspace</h2>
 
         {/* RIGHT: Filters and Sort */}
         <div className="header-right">
@@ -205,7 +207,7 @@ export default function ActiveWorkspace({
               <div className="converter-panel">
                 <div className="converter-panel-header">
                   <label>Appointment Time Converter & Logger</label>
-                  <button className="btn-close" onClick={() => toggleConverter(country.name)}>&times;</button>
+                  <button className="btn-close" style={{position: 'absolute'}} onClick={() => toggleConverter(country.name)}>&times;</button>
                 </div>
                 
                 <div className="converter-split">
