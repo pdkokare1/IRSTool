@@ -1,4 +1,4 @@
-// components/RightDrawer.jsx
+// src/components/RightDrawer.jsx
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -11,19 +11,16 @@ export default function RightDrawer({
   const [drawerWidth, setDrawerWidth] = useState(() => parseInt(localStorage.getItem('rightDrawerWidth_v1')) || 340);
   const isResizing = useRef(false);
 
-  // Auto-minimize the workspace notes if the user opens the Call Flow Guide
   useEffect(() => {
     if (isFlowGuideExpanded) {
       setIsNotesOpen(false);
     }
   }, [isFlowGuideExpanded]);
 
-  // Persist drawer width layout to local storage
   useEffect(() => {
     localStorage.setItem('rightDrawerWidth_v1', drawerWidth);
   }, [drawerWidth]);
 
-  // Handle Drag logic
   const handleMouseMove = useCallback((e) => {
     if (!isResizing.current) return;
     const newWidth = document.body.clientWidth - e.clientX;
@@ -77,7 +74,6 @@ export default function RightDrawer({
       className={`flow-sidebar ${isRightDrawerOpen ? 'open' : 'closed'}`}
       style={{ '--right-drawer-width': `${drawerWidth}px` }}
     >
-      {/* Moved Burger Menu to outer left edge of Right Drawer */}
       <button 
         className={`right-burger-menu-btn ${isRightDrawerOpen ? 'open' : ''}`}
         onClick={() => setIsRightDrawerOpen(!isRightDrawerOpen)}
@@ -137,8 +133,7 @@ export default function RightDrawer({
                       <button 
                         className="btn-save-script"
                         onClick={() => {
-                          localStorage.setItem('callFlowScripts_v1', JSON.stringify(customScripts));
-                          alert(`Script configuration saved for ${step}!`);
+                          alert(`Script configuration saved for ${step} in the current project!`);
                         }}
                       >
                         Save Script
@@ -156,7 +151,6 @@ export default function RightDrawer({
         </div>
       )}
 
-      {/* Workspace Notes Bottom Drawer */}
       <div className={`scratchpad-container ${notesClass}`}>
         <div className="scratchpad-header" onClick={handleNotesToggle}>
           <span>Workspace Notes</span>
