@@ -5,8 +5,7 @@ import React from 'react';
 export default function LeftDrawer({
   isDrawerOpen, setIsDrawerOpen, associateLocation, setAssociateLocation, searchQuery, setSearchQuery,
   regionFilter, setRegionFilter, callWindowStart, setCallWindowStart, callWindowEnd, setCallWindowEnd,
-  availableList, soonList, unavailableList, selectedCountries, toggleCountry, appointmentLogs, setIsLogModalOpen,
-  projects, activeProjectId, setActiveProjectId, createNewProject, deleteProject
+  availableList, soonList, unavailableList, selectedCountries, toggleCountry, appointmentLogs, setIsLogModalOpen
 }) {
   
   const DrawerList = ({ title, items, dotClass }) => {
@@ -49,35 +48,6 @@ export default function LeftDrawer({
 
       <div className="drawer-header">
         <h2 className="drawer-title">Global Directory</h2>
-        
-        {/* --- PROJECT SELECTOR UI --- */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-          <select 
-            className="location-dropdown"
-            style={{ margin: 0, flex: 1, backgroundColor: '#EFF6FF', color: 'var(--color-eu)', borderColor: 'rgba(59, 130, 246, 0.2)' }}
-            value={activeProjectId}
-            onChange={(e) => setActiveProjectId(e.target.value)}
-          >
-            {projects.map(p => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </select>
-          <button 
-            onClick={createNewProject}
-            style={{ padding: '0 12px', background: '#10B981', color: '#FFF', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
-            title="Create New Project"
-          >
-            +
-          </button>
-          <button 
-            onClick={() => deleteProject(activeProjectId)}
-            style={{ padding: '0 12px', background: '#FEF2F2', color: '#EF4444', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
-            title="Delete Current Project"
-          >
-            &times;
-          </button>
-        </div>
-        {/* ----------------------------- */}
         
         <select 
           className="location-dropdown"
