@@ -1,26 +1,115 @@
 // components/ActiveWorkspace.jsx
 
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { getTzOffsetMins } from '../App';
 
 export default function ActiveWorkspace({
   canvasRef, selectedCountries, activeTiles, converterState, 
   toggleConverter, applyDatePreset, handleDateTimeChange, handleSaveLog, associateLocation, 
-  officeLabels, officeTimezones, toggleCountry, isDrawerOpen, setIsDrawerOpen, isRightDrawerOpen, setIsRightDrawerOpen
+  officeLabels, officeTimezones, toggleCountry, isDrawerOpen, setIsDrawerOpen, isRightDrawerOpen, setIsRightDrawerOpen,
+  projects, activeProjectId, setActiveProjectId, createNewProject, deleteProject,
+  filters, handleFilterChange, sortOption, setSortOption
 }) {
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const filterRef = useRef(null);
+
+  // Close filter dropdown when clicking outside of it
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (filterRef.current && !filterRef.current.contains(event.target)) {
+        setIsFilterOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [filterRef]);
 
   return (
     <div className="canvas" ref={canvasRef}>
-      {selectedCountries.length > 0 && (
-        <div className="workspace-header">
-          <h2 className="workspace-title">Active Workspace</h2>
+      
+      {/* ALWAYS VISIBLE HEADER */}
+      <div className="workspace-header">
+        
+        {/* LEFT: Project Controls */}
+        <div className="header-left">
+          <h2 className="workspace-title" style={{marginRight: '12px'}}>Workspace</h2>
+          <select 
+            className="project-dropdown"
+            value={activeProjectId}
+            onChange={(e) => setActiveProjectId(e.target.value)}
+            title="Switch Active Project"
+          >
+            {projects.map(p => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+          <button className="btn-project-add" onClick={createNewProject} title="Create New Project">+</button>
+          <button className="btn-project-del" onClick={() => deleteProject(activeProjectId)} title="Delete Current Project">&times;</button>
         </div>
-      )}
 
-      {selectedCountries.length === 0 ? (
+        {/* RIGHT: Filters and Sort */}
+        <div className="header-right">
+          <div className="filter-container" style={{ position: 'relative' }} ref={filterRef}>
+            <button 
+              className={`btn-header ${isFilterOpen ? 'active' : ''}`}
+              onClick={() => setIsFilterOpen(!isFilterOpen)}
+            >
+              Filters {filters.all ? '(All)' : `(${[filters.available, filters.soon, filters.unavailable].filter(Boolean).length})`} ▼
+            </button>
+            
+            {isFilterOpen && (
+              <div className="filter-dropdown-menu">
+                <label className="filter-option">
+                  <input type="checkbox" checked={filters.all} onChange={() => handleFilterChange('all')} />
+                  <span>Show All</span>
+                </label>
+                <div className="filter-divider"></div>
+                <label className="filter-option">
+                  <input type="checkbox" checked={filters.available} onChange={() => handleFilterChange('available')} />
+                  <span className="status-dot dot-good" style={{marginLeft: '8px', marginRight: '4px', display: 'inline-block'}}></span>
+                  Good to Call
+                </label>
+                <label className="filter-option">
+                  <input type="checkbox" checked={filters.soon} onChange={() => handleFilterChange('soon')} />
+                  <span className="status-dot dot-soon" style={{marginLeft: '8px', marginRight: '4px', display: 'inline-block'}}></span>
+                  Soon Available
+                </label>
+                <label className="filter-option">
+                  <input type="checkbox" checked={filters.unavailable} onChange={() => handleFilterChange('unavailable')} />
+                  <span className="status-dot dot-bad" style={{marginLeft: '8px', marginRight: '4px', display: 'inline-block'}}></span>
+                  Outside Hours
+                </label>
+              </div>
+            )}
+          </div>
+
+          <select 
+            className="btn-header sort-select"
+            value={sortOption}
+            onChange={(e) => setSortOption(e.target.value)}
+          >
+            <option value="alpha-asc">Sort: A - Z</option>
+            <option value="alpha-desc">Sort: Z - A</option>
+            <option value="time-asc">Sort: Time (Earliest First)</option>
+            <option value="time-desc">Sort: Time (Latest First)</option>
+          </select>
+        </div>
+
+      </div>
+
+      {activeTiles.length === 0 ? (
         <div className="canvas-empty">
-          <h2>Your Workspace is Empty</h2>
-          <p>Select targets from the directory on the left to pin them to your active calling dashboard.</p>
+          {selectedCountries.length > 0 ? (
+            <>
+              <h2>No Countries Match Your Filters</h2>
+              <p>Adjust your filter settings in the top right to view hidden targets.</p>
+            </>
+          ) : (
+            <>
+              <h2>Your Workspace is Empty</h2>
+              <p>Select targets from the directory on the left to pin them to your active calling dashboard.</p>
+            </>
+          )}
         </div>
       ) : (
         <div className="list-view-container">
@@ -120,7 +209,6 @@ export default function ActiveWorkspace({
                 </div>
                 
                 <div className="converter-split">
-                  {/* LEFT COLUMN: Time Preview Display */}
                   <div className="converter-left">
                     {convertedAssociateTime ? (
                       <>
@@ -149,7 +237,6 @@ export default function ActiveWorkspace({
                     )}
                   </div>
 
-                  {/* RIGHT COLUMN: Controls and Save */}
                   <div className="converter-right">
                     <div className="preset-container">
                       <button className="preset-btn" onClick={() => applyDatePreset(country.name, 0)}>Today</button>
@@ -197,19 +284,16 @@ export default function ActiveWorkspace({
               <div key={country.name} className={`list-row-wrapper ${listThemeClass}`}>
                 <div className="list-row">
                   
-                  {/* GROUP 1: NAME AND GDPR */}
                   <div className="list-group list-group-main">
                     <h2 className="list-name">{country.name}</h2>
                     {country.isEU && <span className="badge badge-eu">🇪🇺 GDPR</span>}
                   </div>
                   
-                  {/* GROUP 2: TIME AND OFFSET */}
                   <div className="list-group list-group-time">
                     <p className="list-time">{country.localTimeString}</p>
                     <p className="list-offset">{country.offsetText}</p>
                   </div>
 
-                  {/* GROUP 3: ACTIONS */}
                   <div className="list-group-actions">
                     <span className={`badge ${badgeClass}`}>{statusText}</span>
                     <button onClick={() => toggleConverter(country.name)} className="btn-toggle-converter">
