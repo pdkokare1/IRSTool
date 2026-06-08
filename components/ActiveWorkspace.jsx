@@ -43,7 +43,6 @@ export default function ActiveWorkspace({
             ))}
           </select>
           <button className="btn-project-add" onClick={openNewProjectModal} title="Create New Project">+</button>
-          <button className="btn-project-del" onClick={() => deleteProject(activeProjectId)} title="Delete Current Project">&times;</button>
         </div>
 
         {/* CENTER: Title */}
@@ -92,8 +91,8 @@ export default function ActiveWorkspace({
           >
             <option value="alpha-asc">Sort: A - Z</option>
             <option value="alpha-desc">Sort: Z - A</option>
-            <option value="time-asc">Sort: Time (Earliest First)</option>
-            <option value="time-desc">Sort: Time (Latest First)</option>
+            <option value="time-asc">Sort: Time (Earliest)</option>
+            <option value="time-desc">Sort: Time (Latest)</option>
           </select>
         </div>
 
@@ -317,6 +316,18 @@ export default function ActiveWorkspace({
           })}
         </div>
       )}
+
+      {/* BOTTOM ACTION ZONE: Delete Current Project */}
+      <div className="delete-project-zone">
+        <button 
+          className="btn-delete-project-bottom" 
+          onClick={() => deleteProject(activeProjectId)}
+          title="Delete this project permanently"
+        >
+          <span style={{ fontSize: '16px' }}>🗑️</span> Delete Project
+        </button>
+      </div>
+
     </div>
   );
 }
